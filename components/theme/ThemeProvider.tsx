@@ -19,17 +19,27 @@ type ThemeContextValue = {
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
+function applyThemeClass(next: Theme) {
+  document.documentElement.classList.toggle("dark", next === "dark");
+  localStorage.setItem("study_grove_theme", next);
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("light");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("study_grove_theme") as Theme | null;
+    let initial: Theme = "light";
     if (saved === "light" || saved === "dark") {
-      setThemeState(saved);
+      initial = saved;
     } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      setThemeState("dark");
+      initial = "dark";
+    } else if (document.documentElement.classList.contains("dark")) {
+      initial = "dark";
     }
+    setThemeState(initial);
+    applyThemeClass(initial);
     setMounted(true);
   }, []);
 
@@ -40,10 +50,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [theme, mounted]);
 
   const toggleTheme = () => {
-    setThemeState((prev) => (prev === "light" ? "dark" : "light"));
+    setThemeState((prev) => {
+      const next = prev === "light" ? "dark" : "light";
+      applyThemeClass(next);
+      return next;
+    });
   };
 
-  const setTheme = (newTheme: Theme) => setThemeState(newTheme);
+  const setTheme = (newTheme: Theme) => {
+    setThemeState(newTheme);
+    applyThemeClass(newTheme);
+  };
 
   return (
     <ThemeContext.Provider

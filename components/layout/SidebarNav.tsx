@@ -58,10 +58,10 @@ export function SidebarNav({ forestTreesCount, onOpenGrove }: SidebarNavProps) {
 
   return (
     <aside
-      className="sticky top-0 z-30 flex h-screen w-[240px] shrink-0 flex-col bg-[#0F5132] text-white select-none"
+      className="sticky top-0 z-30 flex h-screen w-[240px] shrink-0 flex-col bg-[#0F5132] text-white transition-colors duration-200 select-none dark:border-r dark:border-[#2e4a73]/60 dark:bg-[#1a2437] dark:text-[#f4f7fb]"
       aria-label="Main navigation"
     >
-      <div className="border-b border-white/10 p-5 pb-3">
+      <div className="border-b border-white/10 p-5 pb-3 dark:border-[#2e4a73]/60">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#10B981] to-emerald-900 shadow-sm ring-2 ring-emerald-400/30">
             <TreePine className="h-5 w-5 text-emerald-100" />
@@ -70,7 +70,7 @@ export function SidebarNav({ forestTreesCount, onOpenGrove }: SidebarNavProps) {
             <div className="text-base font-bold leading-none tracking-tight">
               StudyGrove
             </div>
-            <div className="mt-1 text-[11px] font-semibold leading-none text-emerald-200">
+            <div className="mt-1 text-[11px] font-semibold leading-none text-emerald-200 dark:text-emerald-400">
               GCSE Habit Engine
             </div>
           </div>
@@ -83,7 +83,7 @@ export function SidebarNav({ forestTreesCount, onOpenGrove }: SidebarNavProps) {
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2">
-        <p className="px-3 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wider text-emerald-200/70">
+        <p className="px-3 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wider text-emerald-200/70 dark:text-[#a0b9d9]">
           Workspace
         </p>
 
@@ -96,13 +96,13 @@ export function SidebarNav({ forestTreesCount, onOpenGrove }: SidebarNavProps) {
               href={item.href}
               className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-xs font-semibold transition-all ${
                 active
-                  ? "border border-emerald-400/40 bg-emerald-900/50 font-bold text-white shadow-sm"
-                  : "text-emerald-100/90 hover:bg-white/10 hover:text-white"
+                  ? "border border-emerald-400/40 bg-emerald-900/50 font-bold text-white shadow-sm dark:border-emerald-800/60 dark:bg-emerald-950/50 dark:text-emerald-200"
+                  : "text-emerald-100/90 hover:bg-white/10 hover:text-white dark:text-[#a0b9d9] dark:hover:bg-[#273853]/60 dark:hover:text-white"
               }`}
             >
               <span className="flex min-w-0 items-center gap-3">
                 <Icon
-                  className={`h-4 w-4 shrink-0 ${active ? "text-[#10B981]" : "text-emerald-200/80"}`}
+                  className={`h-4 w-4 shrink-0 ${active ? "text-[#10B981] dark:text-emerald-400" : "text-emerald-200/80 dark:text-[#6d94c3]"}`}
                 />
                 <span className="truncate">{item.label}</span>
               </span>
@@ -122,17 +122,17 @@ export function SidebarNav({ forestTreesCount, onOpenGrove }: SidebarNavProps) {
         })}
 
         <div className="px-1 pb-1 pt-3">
-          <div className="flex items-center justify-between px-2 pb-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald-100/80">
+          <div className="flex items-center justify-between px-2 pb-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald-100/80 dark:text-[#a0b9d9]">
             <span>7 Courses</span>
             <span className="text-[10px] font-bold lowercase text-[#10B981]">GCSE</span>
           </div>
-          <div className="grid grid-cols-4 gap-1 rounded-xl border border-white/10 bg-black/15 p-1.5">
+          <div className="grid grid-cols-4 gap-1 rounded-xl border border-white/10 bg-black/15 p-1.5 dark:border-[#2e4a73]/60 dark:bg-[#141d2e]">
             {COURSE_SUBJECTS.map((subj) => (
               <Link
                 key={subj.code}
                 href="/dashboard"
                 title={`Practice ${subj.label}`}
-                className="group flex cursor-pointer flex-col items-center justify-center rounded-lg p-1 transition-transform hover:scale-105 hover:bg-white/10"
+                className="group flex cursor-pointer flex-col items-center justify-center rounded-lg p-1 transition-transform hover:scale-105 hover:bg-white/10 dark:hover:bg-[#273853]"
               >
                 <SubjectIcon subject={subj.code} size="sm" />
                 <span className="mt-0.5 truncate text-[9px] font-bold text-emerald-100/90 group-hover:text-white">
@@ -144,7 +144,7 @@ export function SidebarNav({ forestTreesCount, onOpenGrove }: SidebarNavProps) {
         </div>
       </nav>
 
-      <div className="space-y-2.5 border-t border-white/10 bg-[#0c4329] p-3">
+      <div className="space-y-2.5 border-t border-white/10 bg-[#0c4329] p-3 dark:border-[#2e4a73]/60 dark:bg-[#1a2437]/90">
         <button
           type="button"
           onClick={onOpenGrove}
@@ -183,8 +183,8 @@ export function SidebarNav({ forestTreesCount, onOpenGrove }: SidebarNavProps) {
           href="/settings"
           className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
             pathname === "/settings"
-              ? "bg-white/15 font-semibold text-white"
-              : "text-emerald-100/80 hover:bg-white/10 hover:text-white"
+              ? "bg-white/15 font-semibold text-white dark:bg-[#273853] dark:text-[#f4f7fb]"
+              : "text-emerald-100/80 hover:bg-white/10 hover:text-white dark:text-[#a0b9d9] dark:hover:bg-[#273853] dark:hover:text-white"
           }`}
         >
           <Settings className="h-4 w-4 text-emerald-200/80" />

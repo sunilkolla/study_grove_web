@@ -5,9 +5,9 @@ Phase 1: Shell
 1.4 Sidebar + My Study Grove card — done
 
 Phase 2: Data Layer
-2.1 TypeScript interfaces (types/index.ts)
-2.2 Mock data files (data/mockQuestions.ts, mockTasks.ts, mockFlashcards.ts)
-2.3 Service layer (services/) — components fetch via this
+2.1 TypeScript interfaces (types/index.ts) — done
+2.2 Mock data files (data/mockQuestions.ts, mockTasks.ts, mockFlashcards.ts) — done
+2.3 Service layer (services/) — components fetch via this — done
 
 Phase 3: Quiz Engine
 3.1 QuizCard.tsx + wire to mock questions

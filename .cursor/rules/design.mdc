@@ -5,6 +5,6 @@
 
 ## Architecture
 - 3-column shell: Left Nav (240px) | Main | Right Dock (320px)
-- All types in types/index.ts
+- All types in types/index.ts (root types.ts re-exports for compatibility)
 - All mock data in data/
 - All data fetching via services/ layer (never inline fetch)
