@@ -1,0 +1,1 @@
+Next.js App Router + TypeScript + Tailwind CSS + Lucide React. Prefer Server Components by default and only add 'use client' when interactivity is needed.

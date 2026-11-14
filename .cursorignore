@@ -1,0 +1,5 @@
+node_modules/
+.next/
+_reference/aistudio_prototype/vite.config.ts
+_reference/aistudio_prototype/index.html
+_reference/aistudio_prototype/metadata.json
