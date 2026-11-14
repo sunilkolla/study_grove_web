@@ -1,11 +1,13 @@
+import { mockForestTrees } from "@/data/mockForestTrees";
 import { mockTasks } from "@/data/mockTasks";
 import { mockUserStats } from "@/data/mockUserStats";
 import { yearGroupProfiles } from "@/data/yearGroupProfiles";
-import type { TaskItem, UserStats, YearGroup } from "@/types";
+import type { ForestTree, TaskItem, UserStats, YearGroup } from "@/types";
 
 /** In-memory session (swap for Supabase in Phase 7). */
 let userStats: UserStats = { ...mockUserStats };
 let tasks: TaskItem[] = mockTasks.map((t) => ({ ...t }));
+let forestTrees: ForestTree[] = mockForestTrees.map((t) => ({ ...t }));
 
 export function getSessionUserStats(): UserStats {
   return { ...userStats };
@@ -21,6 +23,14 @@ export function getSessionTasks(): TaskItem[] {
 
 export function setSessionTasks(next: TaskItem[]): void {
   tasks = next.map((t) => ({ ...t }));
+}
+
+export function getSessionForestTrees(): ForestTree[] {
+  return forestTrees.map((t) => ({ ...t }));
+}
+
+export function prependSessionForestTree(tree: ForestTree): void {
+  forestTrees = [{ ...tree }, ...forestTrees];
 }
 
 export function applyYearGroupToStats(yearGroup: YearGroup): UserStats {

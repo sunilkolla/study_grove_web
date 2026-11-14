@@ -147,7 +147,7 @@ export function SidebarNav({ forestTreesCount, onOpenGrove }: SidebarNavProps) {
       <div className="space-y-2.5 border-t border-white/10 bg-[#0c4329] p-3 dark:border-[#2e4a73]/60 dark:bg-[#1a2437]/90">
         <button
           type="button"
-          onClick={onOpenGrove}
+          onClick={() => onOpenGrove?.()}
           className="group w-full cursor-pointer rounded-xl border border-emerald-600/40 bg-gradient-to-br from-emerald-900/90 to-[#0a2e1c] p-3 text-left text-white shadow-sm transition-all hover:border-[#10B981]/50"
         >
           <div className="mb-1.5 flex items-center justify-between">

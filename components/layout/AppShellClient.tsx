@@ -2,7 +2,17 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { OPEN_FOCUS_TIMER } from "@/lib/focusEvents";
 import { SHELL_DATA_CHANGED, notifyShellDataChanged } from "@/lib/shellEvents";
+import { FloatingFocusBubble } from "@/components/focus/FloatingFocusBubble";
+import { FocusTimerModal } from "@/components/focus/FocusTimerModal";
+import { useFocusTimer } from "@/components/focus/useFocusTimer";
+import { GroveModal } from "@/components/grove/GroveModal";
+import {
+  completeFocusSession,
+  type FocusDuration,
+} from "@/services/focusService";
+import { fetchForestTrees } from "@/services/groveService";
 import {
   createTask,
   fetchTasks,
@@ -10,12 +20,18 @@ import {
 } from "@/services/taskService";
 import {
   awardTaskCompletionXp,
-  fetchShellUserStats,
   fetchUserStats,
   toShellStats,
   updateUserYearGroup,
 } from "@/services/userService";
-import type { ShellUserStats, SubjectCode, TaskItem, UserStats, YearGroup } from "@/types";
+import type {
+  ForestTree,
+  ShellUserStats,
+  SubjectCode,
+  TaskItem,
+  UserStats,
+  YearGroup,
+} from "@/types";
 import { ContextDock } from "./ContextDock";
 import { SidebarNav } from "./SidebarNav";
 import { TopHeader } from "./TopHeader";
@@ -29,13 +45,20 @@ export function AppShellClient({ children }: AppShellClientProps) {
   const [dockStats, setDockStats] = useState<UserStats | null>(null);
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [focusModalOpen, setFocusModalOpen] = useState(false);
+  const [groveModalOpen, setGroveModalOpen] = useState(false);
+  const [forestTrees, setForestTrees] = useState<ForestTree[]>([]);
   const router = useRouter();
   const pathname = usePathname();
 
   const loadShellData = useCallback(async () => {
-    const user = await fetchUserStats();
+    const [user, trees] = await Promise.all([
+      fetchUserStats(),
+      fetchForestTrees(),
+    ]);
     setDockStats(user);
     setHeaderStats(toShellStats(user));
+    setForestTrees(trees);
   }, []);
 
   useEffect(() => {
@@ -44,6 +67,12 @@ export function AppShellClient({ children }: AppShellClientProps) {
     window.addEventListener(SHELL_DATA_CHANGED, onChanged);
     return () => window.removeEventListener(SHELL_DATA_CHANGED, onChanged);
   }, [loadShellData]);
+
+  useEffect(() => {
+    const openTimer = () => setFocusModalOpen(true);
+    window.addEventListener(OPEN_FOCUS_TIMER, openTimer);
+    return () => window.removeEventListener(OPEN_FOCUS_TIMER, openTimer);
+  }, []);
 
   const syncTasks = useCallback(async () => {
     setTasks(await fetchTasks());
@@ -87,6 +116,23 @@ export function AppShellClient({ children }: AppShellClientProps) {
     [],
   );
 
+  const handleFocusSessionComplete = useCallback(
+    async (durationMins: FocusDuration, _subject: SubjectCode) => {
+      const next = await completeFocusSession(durationMins, _subject);
+      setDockStats(next);
+      setHeaderStats(toShellStats(next));
+      void loadShellData();
+      notifyShellDataChanged();
+    },
+    [loadShellData],
+  );
+
+  const focusTimer = useFocusTimer({
+    onSessionComplete: (durationMins, subject) =>
+      void handleFocusSessionComplete(durationMins, subject),
+    onSessionCompletedUi: () => setFocusModalOpen(true),
+  });
+
   const handleQuickPractice = useCallback(() => {
     if (pathname === "/dashboard") {
       document
@@ -109,9 +155,7 @@ export function AppShellClient({ children }: AppShellClientProps) {
     <div className="flex min-h-screen bg-[#F8FAFC] text-[#1a2437] transition-colors duration-200 dark:bg-[#141c2b] dark:text-[#f4f7fb]">
       <SidebarNav
         forestTreesCount={headerStats.forestTreesCount}
-        onOpenGrove={() => {
-          /* Grove modal — Phase 5 */
-        }}
+        onOpenGrove={() => setGroveModalOpen(true)}
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -120,9 +164,7 @@ export function AppShellClient({ children }: AppShellClientProps) {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           onYearGroupChange={(year) => void handleYearGroupChange(year)}
-          onQuickFocusStart={() => {
-            /* Focus modal — Phase 5 */
-          }}
+          onQuickFocusStart={() => setFocusModalOpen(true)}
         />
 
         <div className="flex min-h-0 flex-1">
@@ -137,9 +179,38 @@ export function AppShellClient({ children }: AppShellClientProps) {
               void handleAddTask(title, subject, due)
             }
             onQuickPractice={handleQuickPractice}
+            onQuickFocusStart={() => setFocusModalOpen(true)}
           />
         </div>
       </div>
+
+      <FloatingFocusBubble
+        todayFocusMins={dockStats.todayFocusMins}
+        session={
+          focusTimer.phase === "running" || focusTimer.phase === "paused"
+            ? focusTimer.snapshot
+            : null
+        }
+        onOpenTimer={() => setFocusModalOpen(true)}
+        onPause={focusTimer.pauseFocus}
+        onResume={() => {
+          focusTimer.startFocus();
+        }}
+      />
+
+      <FocusTimerModal
+        isOpen={focusModalOpen}
+        onClose={() => setFocusModalOpen(false)}
+        onMinimize={() => setFocusModalOpen(false)}
+        timer={focusTimer}
+      />
+
+      <GroveModal
+        isOpen={groveModalOpen}
+        onClose={() => setGroveModalOpen(false)}
+        trees={forestTrees}
+        stats={dockStats}
+      />
     </div>
   );
 }

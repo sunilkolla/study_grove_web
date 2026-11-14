@@ -20,8 +20,8 @@ Phase 4: Tasks & Dock
 4.2 Interactive checkboxes + live progress bar — done
 
 Phase 5: Pomodoro
-5.1 25-min timer modal (triggered from header + dock)
-5.2 Start/Pause/Reset + increment tree count on complete
+5.1 25-min timer modal (triggered from header + dock) — done
+5.2 Start/Pause/Reset + increment tree count on complete — done
 
 Phase 6: Flashcards
 6.1 Flashcards page with 3D flip + mock deck

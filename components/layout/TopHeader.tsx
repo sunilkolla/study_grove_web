@@ -132,8 +132,7 @@ export function TopHeader({
           <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-xl border border-slate-200 bg-white p-3 text-xs shadow-lg dark:border-[#395e90] dark:bg-[#273853]">
             <p className="font-semibold text-slate-800 dark:text-[#f4f7fb]">Activity &amp; alerts</p>
             <p className="mt-1 text-slate-500 dark:text-[#a0b9d9]">
-              {stats.yearGroup} practice target updated — Phase 5 adds focus
-              timer.
+              Complete a Pomodoro to grow a Sapling and earn focus XP.
             </p>
           </div>
         )}

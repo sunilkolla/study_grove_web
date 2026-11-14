@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import {
   BookOpen,
   CheckSquare,
+  Clock,
   Plus,
   Square,
   Target,
@@ -22,6 +23,7 @@ type ContextDockProps = {
     dueDateLabel: string,
   ) => void;
   onQuickPractice: () => void;
+  onQuickFocusStart: () => void;
 };
 
 export function ContextDock({
@@ -30,6 +32,7 @@ export function ContextDock({
   onToggleTask,
   onAddTask,
   onQuickPractice,
+  onQuickFocusStart,
 }: ContextDockProps) {
   const [taskFilter, setTaskFilter] = useState<TaskListFilter>("all");
   const [isAddingTask, setIsAddingTask] = useState(false);
@@ -54,6 +57,12 @@ export function ContextDock({
   const questionsProgressPercent = Math.min(
     100,
     Math.round((stats.todayQuestionsSolved / targetQuestions) * 100),
+  );
+  const focusProgressPercent = Math.min(
+    100,
+    Math.round(
+      (stats.todayFocusMins / Math.max(1, stats.targetDailyFocusMins)) * 100,
+    ),
   );
 
   const handleCreateTask = (e: FormEvent) => {
@@ -106,6 +115,31 @@ export function ContextDock({
             <BookOpen className="h-3 w-3" />
             Quick Practice Next (+25 XP)
           </button>
+
+          <div className="border-t border-slate-200 pt-2 dark:border-[#2e4a73]">
+            <div className="mb-1 flex items-baseline justify-between text-xs">
+              <span className="font-semibold text-slate-700 dark:text-[#cdd9ea]">
+                Focus target
+              </span>
+              <span className="font-mono text-[10px] font-bold tabular-nums text-slate-600 dark:text-[#a0b9d9]">
+                {stats.todayFocusMins} / {stats.targetDailyFocusMins} min
+              </span>
+            </div>
+            <div className="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-[#1a2437]">
+              <div
+                className="h-full rounded-full bg-[#1E293B] transition-all duration-500 dark:bg-slate-300"
+                style={{ width: `${focusProgressPercent}%` }}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={onQuickFocusStart}
+              className="flex w-full items-center justify-center gap-1 rounded-lg bg-[#1E293B] py-1.5 text-[11px] font-semibold text-white transition-colors hover:bg-slate-800"
+            >
+              <Clock className="h-3 w-3" />
+              Quick 25m Focus
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-col">
