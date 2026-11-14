@@ -35,6 +35,16 @@ export async function updateUserYearGroup(yearGroup: YearGroup): Promise<UserSta
   return next;
 }
 
+export async function awardTaskCompletionXp(amount = 25): Promise<UserStats> {
+  const current = getSessionUserStats();
+  const next: UserStats = {
+    ...current,
+    totalXP: current.totalXP + amount,
+  };
+  setSessionUserStats(next);
+  return next;
+}
+
 export async function recordQuestionAnswered(
   isCorrect: boolean,
   xpAwarded: number,

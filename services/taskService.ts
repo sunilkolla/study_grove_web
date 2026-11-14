@@ -1,4 +1,4 @@
-import type { TaskItem } from "@/types";
+import type { SubjectCode, TaskItem } from "@/types";
 import { getSessionTasks, setSessionTasks } from "./mockSessionStore";
 
 export type TaskListFilter = "all" | "today" | "upcoming";
@@ -20,12 +20,36 @@ export async function fetchTasksFiltered(
   return tasks;
 }
 
-export async function toggleTaskCompletion(taskId: string): Promise<TaskItem[]> {
-  const next = getSessionTasks().map((t) =>
-    t.id === taskId ? { ...t, isCompleted: !t.isCompleted } : t,
-  );
+export async function toggleTaskCompletion(taskId: string): Promise<{
+  tasks: TaskItem[];
+  justCompleted: boolean;
+}> {
+  let justCompleted = false;
+  const next = getSessionTasks().map((t) => {
+    if (t.id !== taskId) return t;
+    const isCompleted = !t.isCompleted;
+    if (isCompleted && !t.isCompleted) justCompleted = true;
+    return { ...t, isCompleted };
+  });
   setSessionTasks(next);
-  return next;
+  return { tasks: next, justCompleted };
+}
+
+export async function createTask(input: {
+  title: string;
+  subject: SubjectCode;
+  dueDateLabel: string;
+}): Promise<TaskItem[]> {
+  const newTask: TaskItem = {
+    id: `task-${Date.now()}`,
+    title: input.title,
+    subject: input.subject,
+    dueDateLabel: input.dueDateLabel,
+    isCompleted: false,
+    priority: "medium",
+  };
+  setSessionTasks([newTask, ...getSessionTasks()]);
+  return getSessionTasks();
 }
 
 export async function getTaskProgress(): Promise<{

@@ -10,14 +10,14 @@ Phase 2: Data Layer
 2.3 Service layer (services/) — components fetch via this — done
 
 Phase 3: Quiz Engine
-3.1 QuizCard.tsx + wire to mock questions
-3.2 Click states (green/red, show explanation, +XP)
-3.3 SVG diagram renderer
-3.4 Skip / subject filters / keyboard shortcuts (A–D)
+3.1 QuizCard.tsx + wire to mock questions — done
+3.2 Click states (green/red, show explanation, +XP) — done
+3.3 SVG diagram renderer — done
+3.4 Skip / subject filters / keyboard shortcuts (A–D) — done
 
 Phase 4: Tasks & Dock
-4.1 ContextDock.tsx with target + task list
-4.2 Interactive checkboxes + live progress bar
+4.1 ContextDock.tsx with target + task list — done
+4.2 Interactive checkboxes + live progress bar — done
 
 Phase 5: Pomodoro
 5.1 25-min timer modal (triggered from header + dock)
