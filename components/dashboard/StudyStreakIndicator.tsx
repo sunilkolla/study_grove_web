@@ -126,16 +126,7 @@ export function StudyStreakIndicator({
               ))}
             </div>
 
-            {!isGoalMetToday && !streakFrozen && (
-              <button
-                type="button"
-                onClick={onQuickPractice}
-                className="flex w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2 text-xs font-black text-white shadow-sm transition-all hover:from-amber-600 hover:to-orange-600 active:scale-95 sm:w-auto"
-              >
-                <span>Practice &amp; Earn +{xpToEarn} XP</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </button>
-            )}
+
           </div>
         </div>
       </div>

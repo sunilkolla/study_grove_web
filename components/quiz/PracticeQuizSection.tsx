@@ -108,28 +108,7 @@ export function PracticeQuizSection({
       className="scroll-mt-4 space-y-4"
       aria-labelledby="practice-center-heading"
     >
-      <div className="relative overflow-hidden rounded-2xl border border-emerald-900/40 bg-gradient-to-br from-[#1e3a34] via-[#244b43] to-[#142823] p-4 text-white shadow-sm sm:p-5 dark:from-[#132722] dark:via-[#1a3831] dark:to-[#0f1f1b]">
-        <div className="pointer-events-none absolute -bottom-10 -right-10 h-44 w-44 rounded-full bg-emerald-500/10 blur-2xl" />
-        <div className="relative z-10 space-y-1">
-          <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold text-emerald-300">
-            <span>{yearGroupTrackLabel(yearGroup)}</span>
-            <span className="text-emerald-400/40">·</span>
-            <span className="font-medium text-emerald-200/70">
-              {profile?.badgeLabel ?? "GCSE Practice"}
-            </span>
-          </div>
-          <h1
-            id="practice-center-heading"
-            className="text-lg font-bold tracking-tight sm:text-xl"
-          >
-            {profile?.title ?? `${yearGroup} Practice`}
-          </h1>
-          <p className="text-xs text-emerald-100/80">
-            Tap an answer to test your recall. Every question earns XP and grows
-            your Grove.
-          </p>
-        </div>
-      </div>
+
 
       <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto pb-1 text-xs">
         {QUIZ_SUBJECT_FILTERS.map((sub) => (
