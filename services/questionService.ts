@@ -1,9 +1,12 @@
 import { mockQuestions } from "@/data/mockQuestions";
-import type { PracticeQuestion, SubjectCode, YearGroup } from "@/types";
+import type { ExamBoard, PracticeQuestion, SubjectCode, YearGroup } from "@/types";
+
+const MIN_BOARD_MATCH = 3;
 
 export type QuestionFilters = {
   yearGroup?: YearGroup;
   subject?: SubjectCode | "ALL";
+  examBoard?: ExamBoard;
 };
 
 function practiceYearForGroup(yearGroup: YearGroup): YearGroup {
@@ -13,13 +16,16 @@ function practiceYearForGroup(yearGroup: YearGroup): YearGroup {
 export async function fetchPracticeQuestions(
   filters: QuestionFilters = {},
 ): Promise<PracticeQuestion[]> {
-  const { yearGroup, subject } = filters;
+  const { yearGroup, subject, examBoard } = filters;
   const practiceYear = yearGroup ? practiceYearForGroup(yearGroup) : undefined;
-  return mockQuestions.filter((q) => {
+  const byYearAndSubject = mockQuestions.filter((q) => {
     if (practiceYear && q.yearGroup !== practiceYear) return false;
     if (subject && subject !== "ALL" && q.subject !== subject) return false;
     return true;
   });
+  if (!examBoard) return byYearAndSubject;
+  const byBoard = byYearAndSubject.filter((q) => q.examBoard === examBoard);
+  return byBoard.length >= MIN_BOARD_MATCH ? byBoard : byYearAndSubject;
 }
 
 export async function fetchQuestionById(

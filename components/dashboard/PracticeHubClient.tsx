@@ -2,21 +2,33 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
+import { StudyStreakIndicator } from "@/components/dashboard/StudyStreakIndicator";
 import { PracticeQuizSection } from "@/components/quiz/PracticeQuizSection";
 import { notifyShellDataChanged } from "@/lib/shellEvents";
 import { recordQuestionAnswered } from "@/services/userService";
-import type { PracticeQuestion, YearGroup } from "@/types";
+import type { PracticeQuestion, UserStats, YearGroup } from "@/types";
 
 type PracticeHubClientProps = {
   questions: PracticeQuestion[];
   yearGroup: YearGroup;
+  userStats: Pick<
+    UserStats,
+    "name" | "yearGroup" | "dailyStreak" | "todayQuestionsSolved"
+  >;
 };
 
 export function PracticeHubClient({
   questions,
   yearGroup,
+  userStats,
 }: PracticeHubClientProps) {
   const router = useRouter();
+
+  const scrollToQuiz = useCallback(() => {
+    document
+      .getElementById("practice-quiz")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
 
   const handleQuestionAnswered = useCallback(
     async (isCorrect: boolean, xp: number) => {
@@ -28,10 +40,15 @@ export function PracticeHubClient({
   );
 
   return (
-    <PracticeQuizSection
-      questions={questions}
-      yearGroup={yearGroup}
-      onQuestionAnswered={(correct, xp) => void handleQuestionAnswered(correct, xp)}
-    />
+    <div className="space-y-2">
+      <StudyStreakIndicator stats={userStats} onQuickPractice={scrollToQuiz} />
+      <PracticeQuizSection
+        questions={questions}
+        yearGroup={yearGroup}
+        onQuestionAnswered={(correct, xp) =>
+          void handleQuestionAnswered(correct, xp)
+        }
+      />
+    </div>
   );
 }

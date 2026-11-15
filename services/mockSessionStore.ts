@@ -1,16 +1,28 @@
+import { buildInitialFlashcardReviews } from "@/data/mockFlashcardReviews";
 import { mockForestTrees } from "@/data/mockForestTrees";
 import { mockTasks } from "@/data/mockTasks";
 import { mockUserStats } from "@/data/mockUserStats";
 import { yearGroupProfiles } from "@/data/yearGroupProfiles";
-import type { ForestTree, TaskItem, UserStats, YearGroup } from "@/types";
+import type {
+  ExamBoard,
+  FlashcardReview,
+  ForestTree,
+  TaskItem,
+  UserStats,
+  YearGroup,
+} from "@/types";
 
 /** In-memory session (swap for Supabase in Phase 7). */
 let userStats: UserStats = { ...mockUserStats };
 let tasks: TaskItem[] = mockTasks.map((t) => ({ ...t }));
 let forestTrees: ForestTree[] = mockForestTrees.map((t) => ({ ...t }));
+let flashcardReviews: Record<string, FlashcardReview> = buildInitialFlashcardReviews();
 
 export function getSessionUserStats(): UserStats {
-  return { ...userStats };
+  return {
+    ...userStats,
+    examBoard: userStats.examBoard ?? "AQA",
+  };
 }
 
 export function setSessionUserStats(next: UserStats): void {
@@ -33,6 +45,26 @@ export function prependSessionForestTree(tree: ForestTree): void {
   forestTrees = [{ ...tree }, ...forestTrees];
 }
 
+export function getSessionFlashcardReviews(): Record<string, FlashcardReview> {
+  return Object.fromEntries(
+    Object.entries(flashcardReviews).map(([id, r]) => [id, { ...r }]),
+  );
+}
+
+export function getSessionFlashcardReview(
+  flashcardId: string,
+): FlashcardReview | undefined {
+  const row = flashcardReviews[flashcardId];
+  return row ? { ...row } : undefined;
+}
+
+export function setSessionFlashcardReview(review: FlashcardReview): void {
+  flashcardReviews = {
+    ...flashcardReviews,
+    [review.flashcardId]: { ...review },
+  };
+}
+
 export function applyYearGroupToStats(yearGroup: YearGroup): UserStats {
   const profile = yearGroupProfiles[yearGroup];
   if (!profile) {
@@ -44,4 +76,12 @@ export function applyYearGroupToStats(yearGroup: YearGroup): UserStats {
     targetDailyFocusMins: profile.targetFocusMins,
     targetDailyQuestions: profile.targetQuestions,
   };
+}
+
+export function applyUserProfile(
+  yearGroup: YearGroup,
+  examBoard: ExamBoard,
+): UserStats {
+  const withYear = applyYearGroupToStats(yearGroup);
+  return { ...withYear, examBoard };
 }

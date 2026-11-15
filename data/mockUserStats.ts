@@ -3,6 +3,7 @@ import type { UserStats } from "@/types";
 export const mockUserStats: UserStats = {
   name: "Hansi",
   yearGroup: "Year 10",
+  examBoard: "AQA",
   school: "St. Dunstan Academy",
   dailyStreak: 5,
   longestStreak: 14,

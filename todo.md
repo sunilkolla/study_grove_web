@@ -24,8 +24,8 @@ Phase 5: Pomodoro
 5.2 Start/Pause/Reset + increment tree count on complete — done
 
 Phase 6: Flashcards
-6.1 Flashcards page with 3D flip + mock deck
-6.2 SM-2 rating buttons
+6.1 Flashcards page with 3D flip + mock deck — done
+6.2 SM-2 rating buttons — done
 
 Phase 7: Backend
 7.1 Supabase auth (Google + Email)

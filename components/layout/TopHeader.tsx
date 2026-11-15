@@ -1,24 +1,23 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import {
   Award,
   Bell,
-  Check,
-  ChevronDown,
   Clock,
   Flame,
   Search,
 } from "lucide-react";
 import { ThemeSwitcher } from "@/components/common/ThemeSwitcher";
-import { YEAR_GROUPS, yearGroupTrackLabel } from "@/lib/yearGroups";
-import type { ShellUserStats, YearGroup } from "@/types";
+import { examBoardLabel } from "@/lib/examBoards";
+import { yearGroupTrackLabel } from "@/lib/yearGroups";
+import type { ShellUserStats } from "@/types";
 
 type TopHeaderProps = {
   stats: ShellUserStats;
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  onYearGroupChange: (year: YearGroup) => void;
   onQuickFocusStart?: () => void;
 };
 
@@ -26,7 +25,6 @@ export function TopHeader({
   stats,
   searchQuery,
   onSearchChange,
-  onYearGroupChange,
   onQuickFocusStart,
 }: TopHeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
@@ -35,6 +33,13 @@ export function TopHeader({
   const levelProgress = Math.round(
     (stats.currentLevelXP / stats.xpForNextLevel) * 100,
   );
+
+  const initials = stats.name
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between gap-4 border-b border-slate-200/80 bg-white/95 px-4 backdrop-blur-md transition-colors duration-200 dark:border-[#2e4a73]/60 dark:bg-[#1a2437]/95 sm:gap-6 sm:px-6">
@@ -57,21 +62,13 @@ export function TopHeader({
       </div>
 
       <div className="relative flex shrink-0 items-center gap-2 sm:gap-3">
-        <div className="hidden items-center gap-0.5 rounded-lg border border-slate-200 bg-[#F8FAFC] p-0.5 dark:border-[#2e4a73] dark:bg-[#273853] md:flex">
-          {YEAR_GROUPS.map((yr) => (
-            <button
-              key={yr}
-              type="button"
-              onClick={() => onYearGroupChange(yr)}
-              className={`rounded-md px-2.5 py-1 text-[11px] font-bold transition-all ${
-                stats.yearGroup === yr
-                  ? "bg-[#1E293B] text-white shadow-sm dark:bg-[#395e90]"
-                  : "text-slate-500 hover:text-slate-800 dark:text-[#a0b9d9] dark:hover:text-white"
-              }`}
-            >
-              {yr}
-            </button>
-          ))}
+        <div
+          className="hidden items-center rounded-lg border border-slate-200 bg-[#F8FAFC] px-2.5 py-1.5 md:flex dark:border-[#2e4a73] dark:bg-[#273853]"
+          title="Year group — edit in profile"
+        >
+          <span className="text-[11px] font-bold text-[#1E293B] dark:text-[#f4f7fb]">
+            {stats.yearGroup}
+          </span>
         </div>
 
         <div
@@ -130,7 +127,9 @@ export function TopHeader({
 
         {showNotifications && (
           <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-xl border border-slate-200 bg-white p-3 text-xs shadow-lg dark:border-[#395e90] dark:bg-[#273853]">
-            <p className="font-semibold text-slate-800 dark:text-[#f4f7fb]">Activity &amp; alerts</p>
+            <p className="font-semibold text-slate-800 dark:text-[#f4f7fb]">
+              Activity &amp; alerts
+            </p>
             <p className="mt-1 text-slate-500 dark:text-[#a0b9d9]">
               Complete a Pomodoro to grow a Sapling and earn focus XP.
             </p>
@@ -147,53 +146,43 @@ export function TopHeader({
               className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-[#0F5132] to-[#10B981] text-xs font-bold text-white"
               aria-hidden
             >
-              AM
+              {initials}
             </div>
             <div className="hidden text-left md:block">
               <div className="text-xs font-semibold leading-none text-slate-800 dark:text-[#f4f7fb]">
                 {stats.name}
               </div>
               <div className="mt-1 text-[10px] font-bold leading-none text-slate-500 dark:text-[#a0b9d9]">
-                {yearGroupTrackLabel(stats.yearGroup)}
+                {yearGroupTrackLabel(stats.yearGroup)} ·{" "}
+                {examBoardLabel(stats.examBoard)}
               </div>
             </div>
-            <ChevronDown className="h-3.5 w-3.5 text-slate-400 dark:text-[#a0b9d9]" />
           </button>
 
           {showProfileMenu && (
             <div className="absolute right-0 z-50 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-3 text-xs shadow-lg dark:border-[#395e90] dark:bg-[#273853]">
               <div className="border-b border-slate-100 pb-2 dark:border-[#395e90]/60">
-                <p className="font-bold text-slate-800 dark:text-[#f4f7fb]">{stats.name}</p>
-                <p className="text-[11px] text-slate-500 dark:text-[#a0b9d9]">{stats.school}</p>
+                <p className="font-bold text-slate-800 dark:text-[#f4f7fb]">
+                  {stats.name}
+                </p>
+                <p className="text-[11px] text-slate-500 dark:text-[#a0b9d9]">
+                  {stats.school}
+                </p>
               </div>
-              <p className="mb-1.5 mt-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#6d94c3]">
-                Year group
+              <p className="mt-2 text-[11px] text-slate-600 dark:text-[#a0b9d9]">
+                {yearGroupTrackLabel(stats.yearGroup)} ·{" "}
+                {examBoardLabel(stats.examBoard)}
               </p>
-              <div className="space-y-1">
-                {YEAR_GROUPS.map((yr) => (
-                  <button
-                    key={yr}
-                    type="button"
-                    onClick={() => {
-                      onYearGroupChange(yr);
-                      setShowProfileMenu(false);
-                    }}
-                    className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left ${
-                      stats.yearGroup === yr
-                        ? "bg-emerald-50 font-bold text-[#0F5132] dark:bg-[#1a2437] dark:text-white"
-                        : "text-slate-600 hover:bg-slate-50 dark:text-[#a0b9d9] dark:hover:bg-[#1a2437]"
-                    }`}
-                  >
-                    <span>{yearGroupTrackLabel(yr)}</span>
-                    {stats.yearGroup === yr && (
-                      <Check className="h-3.5 w-3.5 text-[#10B981]" />
-                    )}
-                  </button>
-                ))}
-              </div>
-              <p className="mt-2 border-t border-slate-100 pt-2 text-[11px] text-slate-500 dark:border-[#395e90]/60 dark:text-[#a0b9d9]">
+              <p className="mt-1 border-t border-slate-100 pt-2 text-[11px] text-slate-500 dark:border-[#395e90]/60 dark:text-[#a0b9d9]">
                 {stats.todayQuestionsSolved} questions practiced today
               </p>
+              <Link
+                href="/profile"
+                onClick={() => setShowProfileMenu(false)}
+                className="mt-2 flex w-full items-center justify-center rounded-lg bg-emerald-600 py-2 text-xs font-bold text-white hover:bg-emerald-500"
+              >
+                Edit profile →
+              </Link>
             </div>
           )}
         </div>

@@ -22,7 +22,6 @@ import {
   awardTaskCompletionXp,
   fetchUserStats,
   toShellStats,
-  updateUserYearGroup,
 } from "@/services/userService";
 import type {
   ForestTree,
@@ -30,7 +29,6 @@ import type {
   SubjectCode,
   TaskItem,
   UserStats,
-  YearGroup,
 } from "@/types";
 import { ContextDock } from "./ContextDock";
 import { SidebarNav } from "./SidebarNav";
@@ -81,17 +79,6 @@ export function AppShellClient({ children }: AppShellClientProps) {
   useEffect(() => {
     void syncTasks();
   }, [pathname, syncTasks]);
-
-  const handleYearGroupChange = useCallback(
-    async (yearGroup: YearGroup) => {
-      const next = await updateUserYearGroup(yearGroup);
-      setHeaderStats(toShellStats(next));
-      setDockStats(next);
-      router.refresh();
-      notifyShellDataChanged();
-    },
-    [router],
-  );
 
   const handleToggleTask = useCallback(
     async (taskId: string) => {
@@ -155,6 +142,7 @@ export function AppShellClient({ children }: AppShellClientProps) {
     <div className="flex min-h-screen bg-[#F8FAFC] text-[#1a2437] transition-colors duration-200 dark:bg-[#141c2b] dark:text-[#f4f7fb]">
       <SidebarNav
         forestTreesCount={headerStats.forestTreesCount}
+        examBoard={headerStats.examBoard}
         onOpenGrove={() => setGroveModalOpen(true)}
       />
 
@@ -163,7 +151,6 @@ export function AppShellClient({ children }: AppShellClientProps) {
           stats={headerStats}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
-          onYearGroupChange={(year) => void handleYearGroupChange(year)}
           onQuickFocusStart={() => setFocusModalOpen(true)}
         />
 

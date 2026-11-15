@@ -75,6 +75,7 @@ export interface FlashcardReview {
 export interface UserStats {
   name: string;
   yearGroup: YearGroup;
+  examBoard: ExamBoard;
   school: string;
   avatarUrl?: string;
   dailyStreak: number;
@@ -96,6 +97,7 @@ export type ShellUserStats = Pick<
   UserStats,
   | "name"
   | "yearGroup"
+  | "examBoard"
   | "school"
   | "dailyStreak"
   | "totalXP"
@@ -172,6 +174,7 @@ export const STUDY_NAV_ROUTES = [
   "/mindmaps",
   "/flashcards",
   "/quizzes",
+  "/profile",
   "/settings",
 ] as const;
 

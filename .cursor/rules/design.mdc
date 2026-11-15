@@ -1,6 +1,7 @@
 ## Design Rules
 - ALWAYS match visual layout from /_reference/prototype_screenshots/
-- Use the exact colors: dark green #0F5132, mint accent #10B981, navy #1E293B
+- Use the exact colors: dark green #0F5132 (Grove card & accents), mint accent #10B981, navy #1E293B
+- Daylight sidebar: white/off-white column (`bg-white`, borders `#cdd9ea`); Midnight sidebar `#1a2437` — match `practiceHub.png`
 - Reference implementation: /_reference/aistudio_prototype/
 
 ## Architecture
