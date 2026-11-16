@@ -10,6 +10,8 @@ import {
   TreePine,
   X,
 } from "lucide-react";
+import { FOCUS_SUBJECT_OPTIONS } from "@/lib/focusSubjectOptions";
+import { subjectCodeToLabel } from "@/lib/studyFocusBridge";
 import { xpForFocusDuration, type FocusDuration } from "@/services/focusService";
 import type { SubjectCode } from "@/types";
 import type { useFocusTimer } from "./useFocusTimer";
@@ -32,8 +34,12 @@ export function FocusTimerModal({
   const {
     selectedDuration,
     setSelectedDuration,
+    focusMode,
+    setFocusMode,
     subject,
     setSubject,
+    syncWithSyllabus,
+    setSyncWithSyllabus,
     distractionShield,
     setDistractionShield,
     tabSwitches,
@@ -107,18 +113,49 @@ export function FocusTimerModal({
         {!isCompleted ? (
           <div className="z-10 flex flex-col items-center space-y-5 py-6 text-center">
             <div className="flex flex-wrap items-center justify-center gap-2">
-              <select
-                value={subject}
-                onChange={(e) => setSubject(e.target.value as SubjectCode)}
-                disabled={settingsLocked}
-                className="rounded-lg border border-[#395e90] bg-[#273853] px-3 py-1.5 text-xs font-semibold text-white focus:outline-none disabled:opacity-60"
-              >
-                <option value="BIOLOGY">Biology</option>
-                <option value="MATHS">Maths</option>
-                <option value="PHYSICS">Physics</option>
-                <option value="CHEMISTRY">Chemistry</option>
-                <option value="COMPUTER_SCIENCE">Computer Science</option>
-              </select>
+              <div className="flex rounded-lg border border-[#395e90] bg-[#273853] p-1">
+                <button
+                  type="button"
+                  disabled={settingsLocked}
+                  onClick={() => setFocusMode("subject")}
+                  className={`rounded-md px-3 py-1 text-xs font-semibold disabled:opacity-60 ${
+                    focusMode === "subject"
+                      ? "bg-emerald-600 text-white"
+                      : "text-[#a0b9d9] hover:text-white"
+                  }`}
+                >
+                  Study subject
+                </button>
+                <button
+                  type="button"
+                  disabled={settingsLocked}
+                  onClick={() => setFocusMode("custom")}
+                  className={`rounded-md px-3 py-1 text-xs font-semibold disabled:opacity-60 ${
+                    focusMode === "custom"
+                      ? "bg-emerald-600 text-white"
+                      : "text-[#a0b9d9] hover:text-white"
+                  }`}
+                >
+                  Custom focus
+                </button>
+              </div>
+              {focusMode === "subject" && (
+                <select
+                  value={subject}
+                  onChange={(e) => {
+                    setSubject(e.target.value as SubjectCode);
+                    setSyncWithSyllabus(false);
+                  }}
+                  disabled={settingsLocked}
+                  className="rounded-lg border border-[#395e90] bg-[#273853] px-3 py-1.5 text-xs font-semibold text-white focus:outline-none disabled:opacity-60"
+                >
+                  {FOCUS_SUBJECT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              )}
               <div className="flex items-center rounded-lg border border-[#395e90] bg-[#273853] p-1">
                 <button
                   type="button"
@@ -146,6 +183,24 @@ export function FocusTimerModal({
                 </button>
               </div>
             </div>
+
+            {focusMode === "subject" && !settingsLocked && (
+              <label className="flex items-center gap-2 text-[11px] text-[#a0b9d9]">
+                <input
+                  type="checkbox"
+                  checked={syncWithSyllabus}
+                  onChange={(e) => setSyncWithSyllabus(e.target.checked)}
+                  className="rounded border-[#395e90]"
+                />
+                Sync subject with Practice Hub focus chip
+              </label>
+            )}
+
+            <p className="text-[11px] text-emerald-300/90">
+              {focusMode === "custom"
+                ? "Custom focus sprint — tree goes to Custom Grove"
+                : `Growing tree for ${subjectCodeToLabel(subject)}`}
+            </p>
 
             <div className="relative flex h-40 w-40 items-center justify-center">
               <svg
@@ -285,7 +340,11 @@ export function FocusTimerModal({
             <div>
               <h3 className="text-xl font-bold">Tree planted in your Grove!</h3>
               <p className="mx-auto mt-1 max-w-xs text-xs text-[#a0b9d9]">
-                {selectedDuration} minutes on {subject}. +1 {treeLabel} added.
+                {selectedDuration} minutes
+                {focusMode === "custom"
+                  ? " · Custom Grove"
+                  : ` on ${subjectCodeToLabel(subject)}`}
+                . +1 {treeLabel} added.
               </p>
             </div>
             <div className="rounded-lg border border-[#395e90] bg-[#273853] px-3 py-1.5 text-xs font-bold text-emerald-300">

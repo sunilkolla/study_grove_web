@@ -1,20 +1,30 @@
 "use client";
 
 import { Play, TreePine } from "lucide-react";
-import { requestOpenFocusTimer } from "@/lib/focusEvents";
-import type { ForestTree } from "@/types";
+import { SYLLABUS_SUBJECTS } from "@/data/gcseSyllabus";
+import {
+  requestFocusPresetCustom,
+  requestFocusPresetForSubject,
+  requestOpenFocusTimer,
+} from "@/lib/focusEvents";
+import { subjectCodeToLabel } from "@/lib/studyFocusBridge";
+import {
+  countTreesByGroveBucket,
+  recentTreesForGroveBucket,
+} from "@/services/groveService";
+import type { ForestTree, GroveBucket, SubjectCode } from "@/types";
 
 type FocusHubClientProps = {
   trees: ForestTree[];
   forestTreesCount: number;
 };
 
-function subjectLabel(code: ForestTree["subject"]): string {
-  if (code === "COMPUTER_SCIENCE") return "CS";
-  return code.replace(/_/g, " ");
-}
-
 function GroveTreeCard({ tree }: { tree: ForestTree }) {
+  const bucket = tree.groveBucket ?? tree.subject ?? "CUSTOM";
+  const subLabel =
+    bucket === "CUSTOM"
+      ? "Custom"
+      : subjectCodeToLabel(bucket as SubjectCode);
   return (
     <article className="flex min-w-[148px] flex-1 flex-col items-center rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-5 text-center dark:border-[#2e4a73] dark:bg-[#1a2437]/60">
       <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
@@ -24,7 +34,7 @@ function GroveTreeCard({ tree }: { tree: ForestTree }) {
         {tree.species}
       </h3>
       <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-[#a0b9d9]">
-        {tree.durationMinutes}m · {subjectLabel(tree.subject)}
+        {tree.durationMinutes}m · {subLabel}
       </p>
       <p className="mt-2 text-[11px] text-slate-400 dark:text-[#8fa8c9]">
         {tree.completedAt}
@@ -33,11 +43,54 @@ function GroveTreeCard({ tree }: { tree: ForestTree }) {
   );
 }
 
+type GroveSectionProps = {
+  title: string;
+  count: number;
+  trees: ForestTree[];
+  onFocus?: () => void;
+};
+
+function GroveSection({ title, count, trees, onFocus }: GroveSectionProps) {
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-[#2e4a73] dark:bg-[#273853] sm:p-5">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-sm font-extrabold text-slate-900 dark:text-white">
+          {title}{" "}
+          <span className="font-semibold text-slate-500 dark:text-[#a0b9d9]">
+            · {count} {count === 1 ? "tree" : "trees"}
+          </span>
+        </h2>
+        {onFocus && (
+          <button
+            type="button"
+            onClick={onFocus}
+            className="text-xs font-bold text-[#0F5132] hover:underline dark:text-emerald-400"
+          >
+            Focus here →
+          </button>
+        )}
+      </div>
+      {trees.length > 0 ? (
+        <div className="flex gap-3 overflow-x-auto pb-1">
+          {trees.map((tree) => (
+            <GroveTreeCard key={tree.id} tree={tree} />
+          ))}
+        </div>
+      ) : (
+        <p className="text-xs text-slate-500 dark:text-[#a0b9d9]">
+          No trees yet — start a focus session for this subject.
+        </p>
+      )}
+    </section>
+  );
+}
+
 export function FocusHubClient({
   trees,
   forestTreesCount,
 }: FocusHubClientProps) {
-  const recentTrees = trees.slice(0, 4);
+  const counts = countTreesByGroveBucket(trees);
+  const customCount = counts.CUSTOM ?? 0;
 
   return (
     <section className="mx-auto w-full max-w-4xl space-y-6">
@@ -53,7 +106,7 @@ export function FocusHubClient({
             </h1>
             <p className="max-w-xl text-sm leading-relaxed text-slate-300">
               Stay in your study zone while solving GCSE practice problems.
-              Every 25m or 50m sprint plants a tree in your Grove.
+              Every 25m or 50m sprint plants a tree in your subject Grove.
             </p>
             <button
               type="button"
@@ -64,7 +117,6 @@ export function FocusHubClient({
               Start focus timer
             </button>
           </div>
-
           <div className="shrink-0 text-right sm:pt-1">
             <p className="text-4xl font-extrabold tabular-nums text-[#10B981] sm:text-5xl">
               {forestTreesCount}
@@ -76,21 +128,32 @@ export function FocusHubClient({
         </div>
       </header>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-[#2e4a73] dark:bg-[#273853] sm:p-6">
+      <div className="space-y-4">
         <h2 className="text-base font-extrabold text-slate-900 dark:text-white">
           Your Study Grove (This Term)
         </h2>
-        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          {recentTrees.length > 0 ? (
-            recentTrees.map((tree) => (
-              <GroveTreeCard key={tree.id} tree={tree} />
-            ))
-          ) : (
-            <p className="text-sm text-slate-500 dark:text-[#a0b9d9]">
-              Complete a focus session to plant your first tree.
-            </p>
-          )}
-        </div>
+
+        {SYLLABUS_SUBJECTS.map((sub) => {
+          const bucket = sub.mapsTo as GroveBucket;
+          const count = counts[bucket] ?? 0;
+          const recent = recentTreesForGroveBucket(trees, bucket, 4);
+          return (
+            <GroveSection
+              key={sub.code}
+              title={`${sub.label} grove`}
+              count={count}
+              trees={recent}
+              onFocus={() => requestFocusPresetForSubject(sub.mapsTo)}
+            />
+          );
+        })}
+
+        <GroveSection
+          title="Custom focus grove"
+          count={customCount}
+          trees={recentTreesForGroveBucket(trees, "CUSTOM", 4)}
+          onFocus={requestFocusPresetCustom}
+        />
       </div>
     </section>
   );

@@ -19,6 +19,7 @@ type TopHeaderProps = {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   focusTimerLabel?: string | null;
+  focusTimerSubject?: string | null;
   onFocusTimerClick?: () => void;
 };
 
@@ -27,6 +28,7 @@ export function TopHeader({
   searchQuery,
   onSearchChange,
   focusTimerLabel,
+  focusTimerSubject,
   onFocusTimerClick,
 }: TopHeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
@@ -118,7 +120,15 @@ export function TopHeader({
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/15">
               <Clock className="h-3 w-3" aria-hidden />
             </span>
-            <span className="tabular-nums">Focusing {focusTimerLabel}</span>
+            <span className="tabular-nums">
+              Focusing {focusTimerLabel}
+              {focusTimerSubject ? (
+                <span className="font-semibold text-emerald-300">
+                  {" "}
+                  · {focusTimerSubject}
+                </span>
+              ) : null}
+            </span>
           </button>
         )}
 

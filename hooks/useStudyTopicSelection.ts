@@ -11,10 +11,13 @@ import {
   type SyllabusSubjectCode,
 } from "@/data/gcseSyllabus";
 import type { TopicPracticeScope } from "@/lib/topic/topicPractice";
+import {
+  STORAGE_SYLLABUS_FOCUS,
+  notifySyllabusFocusChanged,
+} from "@/lib/studyFocusBridge";
 
 const STORAGE_KEY_MAP = "studygrove.currentSubtopicsBySubject";
 const STORAGE_KEY_LEGACY = "studygrove.currentSubtopicId";
-const STORAGE_KEY_FOCUS = "studygrove.focusSubject";
 
 export type CurrentSubtopicsBySubject = Record<SyllabusSubjectCode, string>;
 
@@ -71,7 +74,7 @@ export function useStudyTopicSelection() {
     const map = loadStoredMap();
     let focus: SyllabusSubjectCode = "PHYSICS";
     try {
-      const storedFocus = localStorage.getItem(STORAGE_KEY_FOCUS);
+      const storedFocus = localStorage.getItem(STORAGE_SYLLABUS_FOCUS);
       if (
         storedFocus &&
         (Object.keys(DEFAULT_CURRENT_BY_SUBJECT) as SyllabusSubjectCode[]).includes(
@@ -123,7 +126,8 @@ export function useStudyTopicSelection() {
     setFocusSubject(syllabusSub);
     setSyllabusSubject(syllabusSub);
     try {
-      localStorage.setItem(STORAGE_KEY_FOCUS, syllabusSub);
+      localStorage.setItem(STORAGE_SYLLABUS_FOCUS, syllabusSub);
+      notifySyllabusFocusChanged(syllabusSub);
     } catch {
       /* ignore */
     }
@@ -136,10 +140,11 @@ export function useStudyTopicSelection() {
     setFocusSubject(code);
     setSyllabusSubject(code);
     try {
-      localStorage.setItem(STORAGE_KEY_FOCUS, code);
+      localStorage.setItem(STORAGE_SYLLABUS_FOCUS, code);
     } catch {
       /* ignore */
     }
+    notifySyllabusFocusChanged(code);
     const main = getMainTopicForSubtopic(currentBySubject[code]);
     if (main) setSelectedMainTopicId(main.id);
   }, [currentBySubject]);
@@ -171,10 +176,11 @@ export function useStudyTopicSelection() {
       setSyllabusSubject(code);
       setFocusSubject(code);
       try {
-        localStorage.setItem(STORAGE_KEY_FOCUS, code);
+        localStorage.setItem(STORAGE_SYLLABUS_FOCUS, code);
       } catch {
         /* ignore */
       }
+      notifySyllabusFocusChanged(code);
       const pinnedId = currentBySubject[code];
       const main =
         getMainTopicForSubtopic(pinnedId) ??
@@ -189,10 +195,11 @@ export function useStudyTopicSelection() {
       setFocusSubject(code);
       setSyllabusSubject(code);
       try {
-        localStorage.setItem(STORAGE_KEY_FOCUS, code);
+        localStorage.setItem(STORAGE_SYLLABUS_FOCUS, code);
       } catch {
         /* ignore */
       }
+      notifySyllabusFocusChanged(code);
       const pinnedId = currentBySubject[code];
       const main =
         getMainTopicForSubtopic(pinnedId) ?? GCSE_SYLLABUS_BY_SUBJECT[code][0];

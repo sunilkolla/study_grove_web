@@ -134,13 +134,17 @@ export interface ActiveTopic {
   yearGroup: YearGroup;
 }
 
+export type GroveBucket = SubjectCode | "CUSTOM";
+
 export interface ForestTree {
   id: string;
   species: "English Oak" | "Scots Pine" | "Silver Birch" | "Rowan Sapling";
   durationMinutes: number;
   completedAt: string;
   xpEarned: number;
-  subject: SubjectCode;
+  /** Omitted for custom-focus sessions. */
+  subject?: SubjectCode;
+  groveBucket: GroveBucket;
 }
 
 export interface FocusSession {

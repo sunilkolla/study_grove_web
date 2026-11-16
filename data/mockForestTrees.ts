@@ -31,5 +31,6 @@ export const mockForestTrees: ForestTree[] = Array.from({ length: 18 }, (_, i) =
             : `${Math.floor(i / 3)} days ago`,
     xpEarned: isMature ? 150 : 50,
     subject: SUBJECTS[i % SUBJECTS.length],
+    groveBucket: SUBJECTS[i % SUBJECTS.length],
   };
 });

@@ -7,6 +7,8 @@ import type { FocusTimerSnapshot } from "./useFocusTimer";
 type FloatingFocusBubbleProps = {
   todayFocusMins: number;
   defaultDuration: FocusDuration;
+  focusMode: "subject" | "custom";
+  subjectLabel: string;
   session: FocusTimerSnapshot | null;
   onToggle: () => void;
   onOpenSettings?: () => void;
@@ -15,6 +17,8 @@ type FloatingFocusBubbleProps = {
 export function FloatingFocusBubble({
   todayFocusMins,
   defaultDuration,
+  focusMode,
+  subjectLabel,
   session,
   onToggle,
   onOpenSettings,
@@ -56,7 +60,8 @@ export function FloatingFocusBubble({
               </span>
             </div>
             <p className="mt-0.5 text-[10px] leading-snug text-emerald-200/75">
-              Grow 1 {treeLabel} · Click to toggle
+              {focusMode === "custom" ? "Custom focus" : subjectLabel} · Grow 1{" "}
+              {treeLabel} · Click to toggle
             </p>
           </div>
         </button>

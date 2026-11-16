@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { OPEN_FOCUS_TIMER } from "@/lib/focusEvents";
+import { FOCUS_PRESET, OPEN_FOCUS_TIMER } from "@/lib/focusEvents";
+import { subjectCodeToLabel } from "@/lib/studyFocusBridge";
+import type { FocusMode } from "@/lib/focusPreferences";
 import { SHELL_DATA_CHANGED, notifyShellDataChanged } from "@/lib/shellEvents";
 import { FloatingFocusBubble } from "@/components/focus/FloatingFocusBubble";
 import { FocusSessionToast } from "@/components/focus/FocusSessionToast";
@@ -49,6 +51,8 @@ export function AppShellClient({ children }: AppShellClientProps) {
   const [forestTrees, setForestTrees] = useState<ForestTree[]>([]);
   const [focusToast, setFocusToast] = useState<string | null>(null);
   const focusToastTimerRef = useRef<number | null>(null);
+  const pendingFocusSubjectRef = useRef<SubjectCode | null>(null);
+  const pendingFocusModeRef = useRef<FocusMode | null>(null);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -71,8 +75,26 @@ export function AppShellClient({ children }: AppShellClientProps) {
 
   useEffect(() => {
     const openTimer = () => setFocusModalOpen(true);
+    const onPreset = (e: Event) => {
+      const detail = (
+        e as CustomEvent<{ subject?: SubjectCode; mode?: FocusMode }>
+      ).detail;
+      if (detail?.mode === "custom") {
+        pendingFocusModeRef.current = "custom";
+        pendingFocusSubjectRef.current = null;
+        return;
+      }
+      if (detail?.subject) {
+        pendingFocusSubjectRef.current = detail.subject;
+        pendingFocusModeRef.current = null;
+      }
+    };
     window.addEventListener(OPEN_FOCUS_TIMER, openTimer);
-    return () => window.removeEventListener(OPEN_FOCUS_TIMER, openTimer);
+    window.addEventListener(FOCUS_PRESET, onPreset);
+    return () => {
+      window.removeEventListener(OPEN_FOCUS_TIMER, openTimer);
+      window.removeEventListener(FOCUS_PRESET, onPreset);
+    };
   }, []);
 
   const syncTasks = useCallback(async () => {
@@ -107,8 +129,12 @@ export function AppShellClient({ children }: AppShellClientProps) {
   );
 
   const handleFocusSessionComplete = useCallback(
-    async (durationMins: FocusDuration, _subject: SubjectCode) => {
-      const next = await completeFocusSession(durationMins, _subject);
+    async (
+      durationMins: FocusDuration,
+      mode: FocusMode,
+      subject?: SubjectCode,
+    ) => {
+      const next = await completeFocusSession(durationMins, mode, subject);
       setDockStats(next);
       setHeaderStats(toShellStats(next));
       void loadShellData();
@@ -129,19 +155,53 @@ export function AppShellClient({ children }: AppShellClientProps) {
   }, []);
 
   const focusTimer = useFocusTimer({
-    onSessionComplete: (durationMins, subject) =>
-      void handleFocusSessionComplete(durationMins, subject),
-    onSessionStart: (durationMins, treeLabel) => {
-      showFocusToast(`${durationMins}m Deep Focus ${treeLabel} started!`);
+    onSessionComplete: (durationMins, mode, subject) =>
+      void handleFocusSessionComplete(durationMins, mode, subject),
+    onSessionStart: (ctx) => {
+      const sub =
+        ctx.focusMode === "custom"
+          ? "Custom"
+          : subjectCodeToLabel(ctx.subject);
+      showFocusToast(
+        `${ctx.duration}m Deep Focus ${ctx.treeLabel} started${ctx.focusMode === "subject" ? ` · ${sub}` : ""}!`,
+      );
     },
-    onSessionEnded: (durationMins, treeLabel) => {
-      showFocusToast(`${durationMins}m Deep Focus ${treeLabel} complete!`);
+    onSessionEnded: (ctx) => {
+      const sub =
+        ctx.focusMode === "custom"
+          ? "Custom"
+          : subjectCodeToLabel(ctx.subject);
+      showFocusToast(
+        `${ctx.duration}m Deep Focus ${ctx.treeLabel} complete${ctx.focusMode === "subject" ? ` · ${sub}` : ""}!`,
+      );
     },
     onSessionCompletedUi: () => setFocusModalOpen(true),
   });
 
+  useEffect(() => {
+    if (!focusModalOpen) return;
+    if (pendingFocusModeRef.current === "custom") {
+      focusTimer.setFocusMode("custom");
+      focusTimer.setSyncWithSyllabus(false);
+      pendingFocusModeRef.current = null;
+      return;
+    }
+    if (!pendingFocusSubjectRef.current) return;
+    focusTimer.setFocusMode("subject");
+    focusTimer.setSubject(pendingFocusSubjectRef.current);
+    focusTimer.setSyncWithSyllabus(false);
+    pendingFocusSubjectRef.current = null;
+  }, [focusModalOpen, focusTimer.setFocusMode, focusTimer.setSubject, focusTimer.setSyncWithSyllabus]);
+
   const focusIsLive =
     focusTimer.phase === "running" || focusTimer.phase === "paused";
+
+  const focusHeaderSubtitle =
+    focusIsLive && focusTimer.focusMode === "subject"
+      ? subjectCodeToLabel(focusTimer.subject)
+      : focusIsLive && focusTimer.focusMode === "custom"
+        ? "Custom"
+        : null;
 
   const handleQuickPractice = useCallback(() => {
     if (pathname === "/dashboard") {
@@ -175,6 +235,7 @@ export function AppShellClient({ children }: AppShellClientProps) {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           focusTimerLabel={focusIsLive ? focusTimer.formattedTime : null}
+          focusTimerSubject={focusHeaderSubtitle}
           onFocusTimerClick={() => focusTimer.toggleFocus()}
         />
 
@@ -198,6 +259,12 @@ export function AppShellClient({ children }: AppShellClientProps) {
       <FloatingFocusBubble
         todayFocusMins={dockStats.todayFocusMins}
         defaultDuration={focusTimer.selectedDuration}
+        focusMode={focusTimer.focusMode}
+        subjectLabel={
+          focusTimer.focusMode === "custom"
+            ? "Custom"
+            : subjectCodeToLabel(focusTimer.subject)
+        }
         session={focusIsLive ? focusTimer.snapshot : null}
         onToggle={() => focusTimer.toggleFocus()}
         onOpenSettings={() => setFocusModalOpen(true)}

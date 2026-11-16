@@ -1,27 +1,51 @@
-import type { ForestTree, SubjectCode } from "@/types";
+import type { ForestTree, GroveBucket, SubjectCode } from "@/types";
 import {
   getSessionForestTrees,
   prependSessionForestTree,
 } from "./mockSessionStore";
 import type { FocusDuration } from "./focusService";
+import type { FocusMode } from "@/lib/focusPreferences";
 
 export async function fetchForestTrees(): Promise<ForestTree[]> {
   return getSessionForestTrees();
 }
 
+export function speciesForFocusSession(
+  durationMins: FocusDuration,
+  mode: FocusMode,
+  subject?: SubjectCode,
+): ForestTree["species"] {
+  if (durationMins === 50) return "English Oak";
+  if (mode === "custom") return "Rowan Sapling";
+  switch (subject) {
+    case "BIOLOGY":
+    case "CHEMISTRY":
+    case "COMBINED_SCIENCE":
+      return "Silver Birch";
+    case "MATHS":
+    case "COMPUTER_SCIENCE":
+      return "Rowan Sapling";
+    default:
+      return "Scots Pine";
+  }
+}
+
 export function forestTreeFromFocusSession(
   durationMins: FocusDuration,
-  subject: SubjectCode,
+  mode: FocusMode,
+  subject?: SubjectCode,
 ): ForestTree {
-  const species: ForestTree["species"] =
-    durationMins === 50 ? "English Oak" : "Scots Pine";
+  const groveBucket: GroveBucket =
+    mode === "custom" ? "CUSTOM" : (subject ?? "BIOLOGY");
+  const species = speciesForFocusSession(durationMins, mode, subject);
   return {
     id: `tree-${Date.now()}`,
     species,
     durationMinutes: durationMins,
     completedAt: "Just now",
     xpEarned: durationMins === 50 ? 150 : 50,
-    subject,
+    subject: mode === "custom" ? undefined : subject,
+    groveBucket,
   };
 }
 
@@ -58,7 +82,7 @@ const BREAKDOWN_META: Record<
   "Rowan Sapling": {
     name: "Rowan Saplings",
     xp: "+50 XP each",
-    species: "Maths Sprints",
+    species: "Maths & Custom Sprints",
   },
 };
 
@@ -84,4 +108,55 @@ export function breakdownForestBySpecies(
 
 export function totalFocusMinutesFromTrees(trees: ForestTree[]): number {
   return trees.reduce((sum, t) => sum + t.durationMinutes, 0);
+}
+
+export function groupTreesByGroveBucket(
+  trees: ForestTree[],
+): Map<GroveBucket, ForestTree[]> {
+  const map = new Map<GroveBucket, ForestTree[]>();
+  for (const tree of trees) {
+    const bucket = tree.groveBucket ?? tree.subject ?? "CUSTOM";
+    const list = map.get(bucket) ?? [];
+    list.push(tree);
+    map.set(bucket, list);
+  }
+  return map;
+}
+
+export function countTreesByGroveBucket(
+  trees: ForestTree[],
+): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const tree of trees) {
+    const bucket = tree.groveBucket ?? tree.subject ?? "CUSTOM";
+    counts[bucket] = (counts[bucket] ?? 0) + 1;
+  }
+  return counts;
+}
+
+export function recentTreesForGroveBucket(
+  trees: ForestTree[],
+  bucket: GroveBucket,
+  limit = 4,
+): ForestTree[] {
+  return trees.filter((t) => (t.groveBucket ?? t.subject ?? "CUSTOM") === bucket).slice(0, limit);
+}
+
+export type SubjectGroveBreakdownRow = {
+  bucket: GroveBucket;
+  label: string;
+  count: number;
+};
+
+export function breakdownForestByGroveBucket(
+  trees: ForestTree[],
+): SubjectGroveBreakdownRow[] {
+  const counts = countTreesByGroveBucket(trees);
+  return Object.entries(counts)
+    .map(([bucket, count]) => ({
+      bucket: bucket as GroveBucket,
+      label: bucket === "CUSTOM" ? "Custom Focus" : bucket.replace(/_/g, " "),
+      count,
+    }))
+    .sort((a, b) => b.count - a.count);
 }

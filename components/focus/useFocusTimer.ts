@@ -4,7 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   loadFocusPreferences,
   saveFocusPreferences,
+  type FocusMode,
 } from "@/lib/focusPreferences";
+import {
+  resolveDefaultTimerFocus,
+  SYLLABUS_FOCUS_CHANGED,
+} from "@/lib/studyFocusBridge";
 import {
   treeLabelForDuration,
   type FocusDuration,
@@ -17,6 +22,7 @@ export type FocusTimerSnapshot = {
   selectedDuration: FocusDuration;
   timeLeft: number;
   phase: FocusSessionPhase;
+  focusMode: FocusMode;
   subject: SubjectCode;
   distractionShield: boolean;
   tabSwitches: number;
@@ -25,13 +31,28 @@ export type FocusTimerSnapshot = {
   treeLabel: string;
 };
 
+type SessionNotifyContext = {
+  duration: FocusDuration;
+  treeLabel: string;
+  focusMode: FocusMode;
+  subject: SubjectCode;
+};
+
 type UseFocusTimerOptions = {
   initialSubject?: SubjectCode;
-  onSessionComplete: (durationMins: FocusDuration, subject: SubjectCode) => void;
-  onSessionStart?: (durationMins: FocusDuration, treeLabel: string) => void;
-  onSessionEnded?: (durationMins: FocusDuration, treeLabel: string) => void;
+  onSessionComplete: (
+    durationMins: FocusDuration,
+    mode: FocusMode,
+    subject?: SubjectCode,
+  ) => void;
+  onSessionStart?: (ctx: SessionNotifyContext) => void;
+  onSessionEnded?: (ctx: SessionNotifyContext) => void;
   onSessionCompletedUi?: () => void;
 };
+
+function prefsFromStorage() {
+  return typeof window !== "undefined" ? loadFocusPreferences() : null;
+}
 
 export function useFocusTimer({
   initialSubject = "BIOLOGY",
@@ -40,27 +61,61 @@ export function useFocusTimer({
   onSessionEnded,
   onSessionCompletedUi,
 }: UseFocusTimerOptions) {
-  const prefs = typeof window !== "undefined" ? loadFocusPreferences() : null;
+  const prefs = prefsFromStorage();
   const [selectedDuration, setSelectedDuration] = useState<FocusDuration>(
     prefs?.duration ?? 25,
   );
-  const [timeLeft, setTimeLeft] = useState(
-    (prefs?.duration ?? 25) * 60,
-  );
+  const [timeLeft, setTimeLeft] = useState((prefs?.duration ?? 25) * 60);
   const [phase, setPhase] = useState<FocusSessionPhase>("idle");
+  const [focusMode, setFocusMode] = useState<FocusMode>(
+    prefs?.mode ?? "subject",
+  );
   const [subject, setSubject] = useState<SubjectCode>(
     prefs?.subject ?? initialSubject,
+  );
+  const [syncWithSyllabus, setSyncWithSyllabus] = useState(
+    prefs?.syncWithSyllabus !== false,
   );
   const [distractionShield, setDistractionShield] = useState(true);
   const [tabSwitches, setTabSwitches] = useState(0);
   const completeRef = useRef(onSessionComplete);
   const sessionRewardedRef = useRef(false);
+  const phaseRef = useRef(phase);
 
   completeRef.current = onSessionComplete;
+  phaseRef.current = phase;
+
+  const persistPrefs = useCallback(() => {
+    saveFocusPreferences({
+      duration: selectedDuration,
+      mode: focusMode,
+      subject,
+      syncWithSyllabus,
+    });
+  }, [selectedDuration, focusMode, subject, syncWithSyllabus]);
 
   useEffect(() => {
-    saveFocusPreferences({ duration: selectedDuration, subject });
-  }, [selectedDuration, subject]);
+    persistPrefs();
+  }, [persistPrefs]);
+
+  const applySyllabusDefaultIfIdle = useCallback(() => {
+    if (phaseRef.current !== "idle") return;
+    const resolved = resolveDefaultTimerFocus();
+    setFocusMode(resolved.mode);
+    setSubject(resolved.subject);
+  }, []);
+
+  useEffect(() => {
+    applySyllabusDefaultIfIdle();
+    const onSyllabusFocus = () => {
+      if (syncWithSyllabus && phaseRef.current === "idle") {
+        applySyllabusDefaultIfIdle();
+      }
+    };
+    window.addEventListener(SYLLABUS_FOCUS_CHANGED, onSyllabusFocus);
+    return () =>
+      window.removeEventListener(SYLLABUS_FOCUS_CHANGED, onSyllabusFocus);
+  }, [applySyllabusDefaultIfIdle, syncWithSyllabus]);
 
   const isActive = phase === "running";
   const isCompleted = phase === "completed";
@@ -94,18 +149,60 @@ export function useFocusTimer({
     if (timeLeft !== 0 || !isActive || sessionRewardedRef.current) return;
     sessionRewardedRef.current = true;
     setPhase("completed");
-    completeRef.current(selectedDuration, subject);
-    onSessionEnded?.(selectedDuration, treeLabelForDuration(selectedDuration));
+    const treeLabel = treeLabelForDuration(selectedDuration);
+    completeRef.current(
+      selectedDuration,
+      focusMode,
+      focusMode === "custom" ? undefined : subject,
+    );
+    onSessionEnded?.({
+      duration: selectedDuration,
+      treeLabel,
+      focusMode,
+      subject,
+    });
     onSessionCompletedUi?.();
-  }, [timeLeft, isActive, selectedDuration, subject, onSessionEnded, onSessionCompletedUi]);
+  }, [
+    timeLeft,
+    isActive,
+    selectedDuration,
+    focusMode,
+    subject,
+    onSessionEnded,
+    onSessionCompletedUi,
+  ]);
 
   const startFocus = useCallback(() => {
     sessionRewardedRef.current = false;
     if (phase === "idle") {
-      onSessionStart?.(selectedDuration, treeLabelForDuration(selectedDuration));
+      const resolved = resolveDefaultTimerFocus();
+      const modeForSession: FocusMode =
+        syncWithSyllabus && resolved.mode === "subject" ? "subject" : focusMode;
+      const subjectForSession: SubjectCode =
+        modeForSession === "subject" && syncWithSyllabus
+          ? resolved.subject
+          : subject;
+      if (syncWithSyllabus && resolved.mode === "subject") {
+        setFocusMode("subject");
+        setSubject(resolved.subject);
+      }
+      const treeLabel = treeLabelForDuration(selectedDuration);
+      onSessionStart?.({
+        duration: selectedDuration,
+        treeLabel,
+        focusMode: modeForSession,
+        subject: subjectForSession,
+      });
     }
     setPhase("running");
-  }, [phase, onSessionStart, selectedDuration]);
+  }, [
+    phase,
+    onSessionStart,
+    selectedDuration,
+    focusMode,
+    subject,
+    syncWithSyllabus,
+  ]);
 
   const pauseFocus = useCallback(() => {
     setPhase("paused");
@@ -126,7 +223,8 @@ export function useFocusTimer({
     setTimeLeft(selectedDuration * 60);
     setTabSwitches(0);
     sessionRewardedRef.current = false;
-  }, [selectedDuration]);
+    applySyllabusDefaultIfIdle();
+  }, [selectedDuration, applySyllabusDefaultIfIdle]);
 
   const prepareNewSession = useCallback(() => {
     setSelectedDuration(25);
@@ -135,11 +233,12 @@ export function useFocusTimer({
     setTabSwitches(0);
     setSubject(initialSubject);
     sessionRewardedRef.current = false;
-  }, [initialSubject]);
+    applySyllabusDefaultIfIdle();
+  }, [initialSubject, applySyllabusDefaultIfIdle]);
 
   const openConfigurator = useCallback(() => {
-    if (phase !== "idle") return;
-  }, [phase]);
+    if (phase === "idle") applySyllabusDefaultIfIdle();
+  }, [phase, applySyllabusDefaultIfIdle]);
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
@@ -153,6 +252,7 @@ export function useFocusTimer({
     selectedDuration,
     timeLeft,
     phase,
+    focusMode,
     subject,
     distractionShield,
     tabSwitches,
@@ -166,8 +266,12 @@ export function useFocusTimer({
     selectedDuration,
     setSelectedDuration,
     timeLeft,
+    focusMode,
+    setFocusMode,
     subject,
     setSubject,
+    syncWithSyllabus,
+    setSyncWithSyllabus,
     distractionShield,
     setDistractionShield,
     tabSwitches,
@@ -184,5 +288,6 @@ export function useFocusTimer({
     handleReset,
     prepareNewSession,
     openConfigurator,
+    applySyllabusDefaultIfIdle,
   };
 }

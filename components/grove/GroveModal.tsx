@@ -9,6 +9,7 @@ import {
   X,
 } from "lucide-react";
 import {
+  breakdownForestByGroveBucket,
   breakdownForestBySpecies,
   totalFocusMinutesFromTrees,
 } from "@/services/groveService";
@@ -64,6 +65,7 @@ export function GroveModal({ isOpen, onClose, trees, stats }: GroveModalProps) {
 
   const treeCount = stats.forestTreesCount;
   const breakdown = breakdownForestBySpecies(trees);
+  const bySubject = breakdownForestByGroveBucket(trees);
   const totalMins = totalFocusMinutesFromTrees(trees);
 
   const handleUnlock = (id: string, cost: number) => {
@@ -205,6 +207,27 @@ export function GroveModal({ isOpen, onClose, trees, stats }: GroveModalProps) {
                 ))}
               </div>
 
+              {bySubject.length > 0 && (
+                <div className="mt-4 rounded-xl border border-emerald-600/20 bg-black/20 p-3">
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-300/80">
+                    By subject grove
+                  </p>
+                  <ul className="grid grid-cols-2 gap-2 text-[11px] sm:grid-cols-3">
+                    {bySubject.map((row) => (
+                      <li
+                        key={row.bucket}
+                        className="flex justify-between gap-2 rounded-lg bg-white/5 px-2 py-1.5 text-emerald-100/90"
+                      >
+                        <span>{row.label}</span>
+                        <span className="font-bold text-emerald-300">
+                          {row.count}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               {trees.length > 0 && (
                 <div className="mt-4 space-y-2">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-300/80">
@@ -218,7 +241,8 @@ export function GroveModal({ isOpen, onClose, trees, stats }: GroveModalProps) {
                       >
                         <span className="font-medium">{tree.species}</span>
                         <span className="text-emerald-300/70">
-                          {tree.durationMinutes}m · {tree.subject} · +
+                          {tree.durationMinutes}m ·{" "}
+                          {tree.subject ?? "Custom"} · +
                           {tree.xpEarned} XP
                         </span>
                       </li>
