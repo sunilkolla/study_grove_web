@@ -4,6 +4,11 @@ import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 import { StudyStreakIndicator } from "@/components/dashboard/StudyStreakIndicator";
 import { PracticeQuizSection } from "@/components/quiz/PracticeQuizSection";
+import { CurrentlyStudyingBanner } from "@/components/topic/CurrentlyStudyingBanner";
+import { SyllabusNavigator } from "@/components/topic/SyllabusNavigator";
+import { SyllabusNavigatorPanel } from "@/components/topic/SyllabusNavigatorPanel";
+import { getSubtopicById } from "@/data/gcseSyllabus";
+import { useStudyTopicSelection } from "@/hooks/useStudyTopicSelection";
 import { notifyShellDataChanged } from "@/lib/shellEvents";
 import { recordQuestionAnswered } from "@/services/userService";
 import type { PracticeQuestion, UserStats, YearGroup } from "@/types";
@@ -23,6 +28,7 @@ export function PracticeHubClient({
   userStats,
 }: PracticeHubClientProps) {
   const router = useRouter();
+  const topic = useStudyTopicSelection();
 
   const scrollToQuiz = useCallback(() => {
     document
@@ -39,12 +45,79 @@ export function PracticeHubClient({
     [router],
   );
 
+  const handleToggleSelections = useCallback(() => {
+    if (topic.showSyllabus) {
+      topic.setShowSyllabus(false);
+    } else {
+      topic.openSyllabusForSubject(topic.focusSubject);
+    }
+  }, [topic]);
+
+  const handlePracticeSubtopic = useCallback(
+    (id: string) => {
+      topic.practiceSubtopic(id);
+      topic.setShowSyllabus(false);
+      scrollToQuiz();
+    },
+    [scrollToQuiz, topic],
+  );
+
+  const handlePinSubtopic = useCallback(
+    (id: string) => {
+      topic.pinAsCurrent(id);
+      topic.setShowSyllabus(false);
+    },
+    [topic],
+  );
+
+  const handlePracticeWhole = useCallback(() => {
+    topic.practiceWholeMainTopic();
+    scrollToQuiz();
+  }, [scrollToQuiz, topic]);
+
+  const bannerSubtopic =
+    topic.focusSubtopic ?? getSubtopicById(topic.focusSubtopicId);
+
+  if (!topic.hydrated) {
+    return (
+      <div className="space-y-5">
+        <StudyStreakIndicator stats={userStats} onQuickPractice={scrollToQuiz} />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <StudyStreakIndicator stats={userStats} onQuickPractice={scrollToQuiz} />
+
+      <CurrentlyStudyingBanner
+        focusSubject={topic.focusSubject}
+        currentBySubject={topic.currentBySubject}
+        showSyllabus={topic.showSyllabus}
+        onOpenSubject={topic.openSyllabusForSubject}
+        onToggleSelections={handleToggleSelections}
+      />
+
+      <SyllabusNavigatorPanel open={topic.showSyllabus}>
+        <SyllabusNavigator
+          syllabusSubject={topic.syllabusSubject}
+          onSubjectChange={topic.setSyllabusSubject}
+          mainTopics={topic.mainTopics}
+          selectedMainTopicId={topic.selectedMainTopicId}
+          onMainTopicSelect={topic.setSelectedMainTopicId}
+          activeMainTopic={topic.activeMainTopic}
+          pinnedSubtopicId={topic.currentBySubject[topic.syllabusSubject]}
+          onPracticeSubtopic={handlePracticeSubtopic}
+          onPinSubtopic={handlePinSubtopic}
+          onPracticeWholeTopic={handlePracticeWhole}
+        />
+      </SyllabusNavigatorPanel>
+
       <PracticeQuizSection
         questions={questions}
         yearGroup={yearGroup}
+        practiceScope={topic.practiceScope}
+        topicMasteryPercent={bannerSubtopic?.masteryPercent}
         onQuestionAnswered={(correct, xp) =>
           void handleQuestionAnswered(correct, xp)
         }

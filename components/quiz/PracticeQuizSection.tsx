@@ -3,8 +3,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { PracticeQuestion, YearGroup } from "@/types";
-import { yearGroupProfiles } from "@/data/yearGroupProfiles";
-import { yearGroupTrackLabel } from "@/lib/yearGroups";
+import {
+  filterQuestionsForScope,
+  type TopicPracticeScope,
+} from "@/lib/topic/topicPractice";
+import { SUBTOPICS_BY_ID } from "@/data/gcseSyllabus";
 import {
   QUIZ_SUBJECT_FILTERS,
   subjectFilterLabel,
@@ -15,12 +18,16 @@ import { QuizCard } from "./QuizCard";
 type PracticeQuizSectionProps = {
   questions: PracticeQuestion[];
   yearGroup: YearGroup;
+  practiceScope: TopicPracticeScope;
+  topicMasteryPercent?: number;
   onQuestionAnswered: (isCorrect: boolean, xp: number) => void;
 };
 
 export function PracticeQuizSection({
   questions,
   yearGroup,
+  practiceScope,
+  topicMasteryPercent,
   onQuestionAnswered,
 }: PracticeQuizSectionProps) {
   const [subjectFilter, setSubjectFilter] = useState<SubjectFilter>("ALL");
@@ -30,10 +37,15 @@ export function PracticeQuizSection({
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [floatingXp, setFloatingXp] = useState<number | null>(null);
 
+  const scopedQuestions = useMemo(
+    () => filterQuestionsForScope(questions, practiceScope, SUBTOPICS_BY_ID),
+    [questions, practiceScope],
+  );
+
   const filteredQuestions = useMemo(() => {
-    if (subjectFilter === "ALL") return questions;
-    return questions.filter((q) => q.subject === subjectFilter);
-  }, [questions, subjectFilter]);
+    if (subjectFilter === "ALL") return scopedQuestions;
+    return scopedQuestions.filter((q) => q.subject === subjectFilter);
+  }, [scopedQuestions, subjectFilter]);
 
   const activeQuestion = filteredQuestions[activeIndex] ?? filteredQuestions[0];
 
@@ -73,7 +85,7 @@ export function PracticeQuizSection({
   useEffect(() => {
     setActiveIndex(0);
     resetQuestionState();
-  }, [yearGroup, resetQuestionState]);
+  }, [yearGroup, practiceScope, resetQuestionState]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -100,7 +112,12 @@ export function PracticeQuizSection({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [activeQuestion, handleNextOrSkip, handleSelectOption, showFeedback]);
 
-  const profile = yearGroupProfiles[yearGroup];
+  const scopeHint =
+    practiceScope.mode === "subtopic"
+      ? `Practising ${practiceScope.subtopic.code} ${practiceScope.subtopic.name}`
+      : practiceScope.mode === "mainTopic"
+        ? "Practising whole main topic"
+        : null;
 
   return (
     <section
@@ -108,7 +125,11 @@ export function PracticeQuizSection({
       className="scroll-mt-4 space-y-4"
       aria-labelledby="practice-center-heading"
     >
-
+      {scopeHint && (
+        <p className="text-xs font-semibold text-[#0F5132] dark:text-emerald-400">
+          {scopeHint}
+        </p>
+      )}
 
       <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto pb-1 text-xs">
         {QUIZ_SUBJECT_FILTERS.map((sub) => (
@@ -136,6 +157,7 @@ export function PracticeQuizSection({
           showFeedback={showFeedback}
           soundEnabled={soundEnabled}
           floatingXp={floatingXp}
+          topicMasteryPercent={topicMasteryPercent}
           onToggleSound={() => setSoundEnabled((v) => !v)}
           onSelectOption={handleSelectOption}
           onSkip={handleNextOrSkip}
@@ -143,7 +165,7 @@ export function PracticeQuizSection({
         />
       ) : (
         <p className="rounded-xl border border-dashed border-slate-300 bg-white/80 p-8 text-center text-sm text-slate-500 dark:border-[#2e4a73] dark:bg-[#1a2437]/80 dark:text-[#a0b9d9]">
-          No questions for this filter. Try another subject or year group.
+          No questions for this topic yet. Pick another subtopic or subject filter.
         </p>
       )}
 

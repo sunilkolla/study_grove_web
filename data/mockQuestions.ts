@@ -252,5 +252,47 @@ export const mockQuestions: PracticeQuestion[] = [
     "yearGroup": "Year 11",
     "difficulty": "Higher",
     "xpReward": 35
+  },
+  {
+    "id": "q-phy-1-5a",
+    "subject": "PHYSICS",
+    "subjectName": "Physics",
+    "examBoard": "AQA",
+    "topicCode": "PHY-AQA-1.5",
+    "topicName": "1.5 Energy Transfer by Heating",
+    "questionText": "Which method of thermal energy transfer occurs primarily in fluids (liquids and gases) due to density changes?",
+    "options": [
+      "Conduction",
+      "Convection",
+      "Radiation",
+      "Evaporation"
+    ],
+    "correctAnswerIndex": 1,
+    "explanation": "Convection involves circulation of fluid regions that expand, become less dense, and rise, while cooler dense fluid sinks — transferring energy through the bulk movement.",
+    "examTip": "Conduction needs a solid (or mainly particles touching); convection needs a fluid.",
+    "yearGroup": "Year 10",
+    "difficulty": "Foundation",
+    "xpReward": 25
+  },
+  {
+    "id": "q-phy-1-5b",
+    "subject": "PHYSICS",
+    "subjectName": "Physics",
+    "examBoard": "AQA",
+    "topicCode": "PHY-AQA-1.5",
+    "topicName": "1.5 Energy Transfer by Heating",
+    "questionText": "Which surface colour would BEST reduce unwanted thermal radiation transfer from a hot object?",
+    "options": [
+      "Polished silver",
+      "Matt black",
+      "White gloss",
+      "Clear glass"
+    ],
+    "correctAnswerIndex": 0,
+    "explanation": "Shiny silver surfaces are poor emitters and poor absorbers of infrared radiation, so less energy is radiated away.",
+    "examTip": "Matt black is best for absorption/emission; silvered surfaces reduce radiation losses.",
+    "yearGroup": "Year 10",
+    "difficulty": "Intermediate",
+    "xpReward": 25
   }
 ];
