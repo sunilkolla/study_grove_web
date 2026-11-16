@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { OPEN_FOCUS_TIMER } from "@/lib/focusEvents";
 import { SHELL_DATA_CHANGED, notifyShellDataChanged } from "@/lib/shellEvents";
 import { FloatingFocusBubble } from "@/components/focus/FloatingFocusBubble";
+import { FocusSessionToast } from "@/components/focus/FocusSessionToast";
 import { FocusTimerModal } from "@/components/focus/FocusTimerModal";
 import { useFocusTimer } from "@/components/focus/useFocusTimer";
 import { GroveModal } from "@/components/grove/GroveModal";
@@ -46,6 +47,8 @@ export function AppShellClient({ children }: AppShellClientProps) {
   const [focusModalOpen, setFocusModalOpen] = useState(false);
   const [groveModalOpen, setGroveModalOpen] = useState(false);
   const [forestTrees, setForestTrees] = useState<ForestTree[]>([]);
+  const [focusToast, setFocusToast] = useState<string | null>(null);
+  const focusToastTimerRef = useRef<number | null>(null);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -114,11 +117,31 @@ export function AppShellClient({ children }: AppShellClientProps) {
     [loadShellData],
   );
 
+  const showFocusToast = useCallback((message: string) => {
+    setFocusToast(message);
+    if (focusToastTimerRef.current !== null) {
+      window.clearTimeout(focusToastTimerRef.current);
+    }
+    focusToastTimerRef.current = window.setTimeout(() => {
+      setFocusToast(null);
+      focusToastTimerRef.current = null;
+    }, 4500);
+  }, []);
+
   const focusTimer = useFocusTimer({
     onSessionComplete: (durationMins, subject) =>
       void handleFocusSessionComplete(durationMins, subject),
+    onSessionStart: (durationMins, treeLabel) => {
+      showFocusToast(`${durationMins}m Deep Focus ${treeLabel} started!`);
+    },
+    onSessionEnded: (durationMins, treeLabel) => {
+      showFocusToast(`${durationMins}m Deep Focus ${treeLabel} complete!`);
+    },
     onSessionCompletedUi: () => setFocusModalOpen(true),
   });
+
+  const focusIsLive =
+    focusTimer.phase === "running" || focusTimer.phase === "paused";
 
   const handleQuickPractice = useCallback(() => {
     if (pathname === "/dashboard") {
@@ -151,7 +174,8 @@ export function AppShellClient({ children }: AppShellClientProps) {
           stats={headerStats}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
-          onQuickFocusStart={() => setFocusModalOpen(true)}
+          focusTimerLabel={focusIsLive ? focusTimer.formattedTime : null}
+          onFocusTimerClick={() => focusTimer.toggleFocus()}
         />
 
         <div className="flex min-h-0 flex-1">
@@ -173,17 +197,13 @@ export function AppShellClient({ children }: AppShellClientProps) {
 
       <FloatingFocusBubble
         todayFocusMins={dockStats.todayFocusMins}
-        session={
-          focusTimer.phase === "running" || focusTimer.phase === "paused"
-            ? focusTimer.snapshot
-            : null
-        }
-        onOpenTimer={() => setFocusModalOpen(true)}
-        onPause={focusTimer.pauseFocus}
-        onResume={() => {
-          focusTimer.startFocus();
-        }}
+        defaultDuration={focusTimer.selectedDuration}
+        session={focusIsLive ? focusTimer.snapshot : null}
+        onToggle={() => focusTimer.toggleFocus()}
+        onOpenSettings={() => setFocusModalOpen(true)}
       />
+
+      <FocusSessionToast message={focusToast} />
 
       <FocusTimerModal
         isOpen={focusModalOpen}

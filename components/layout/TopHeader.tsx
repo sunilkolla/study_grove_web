@@ -18,14 +18,16 @@ type TopHeaderProps = {
   stats: ShellUserStats;
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  onQuickFocusStart?: () => void;
+  focusTimerLabel?: string | null;
+  onFocusTimerClick?: () => void;
 };
 
 export function TopHeader({
   stats,
   searchQuery,
   onSearchChange,
-  onQuickFocusStart,
+  focusTimerLabel,
+  onFocusTimerClick,
 }: TopHeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -106,14 +108,19 @@ export function TopHeader({
 
         <ThemeSwitcher variant="compact" className="!text-slate-600" />
 
-        <button
-          type="button"
-          onClick={onQuickFocusStart}
-          className="hidden items-center gap-1.5 rounded-lg bg-[#1E293B] px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-slate-800 sm:inline-flex"
-        >
-          <Clock className="h-3.5 w-3.5" />
-          Quick 25m Focus
-        </button>
+        {focusTimerLabel && (
+          <button
+            type="button"
+            onClick={onFocusTimerClick}
+            className="inline-flex items-center gap-1.5 rounded-full bg-[#1E293B] px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-slate-800"
+            title="Focus timer — click to pause or resume"
+          >
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/15">
+              <Clock className="h-3 w-3" aria-hidden />
+            </span>
+            <span className="tabular-nums">Focusing {focusTimerLabel}</span>
+          </button>
+        )}
 
         <button
           type="button"

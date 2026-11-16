@@ -2,6 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  loadFocusPreferences,
+  saveFocusPreferences,
+} from "@/lib/focusPreferences";
+import {
   treeLabelForDuration,
   type FocusDuration,
 } from "@/services/focusService";
@@ -24,24 +28,39 @@ export type FocusTimerSnapshot = {
 type UseFocusTimerOptions = {
   initialSubject?: SubjectCode;
   onSessionComplete: (durationMins: FocusDuration, subject: SubjectCode) => void;
+  onSessionStart?: (durationMins: FocusDuration, treeLabel: string) => void;
+  onSessionEnded?: (durationMins: FocusDuration, treeLabel: string) => void;
   onSessionCompletedUi?: () => void;
 };
 
 export function useFocusTimer({
   initialSubject = "BIOLOGY",
   onSessionComplete,
+  onSessionStart,
+  onSessionEnded,
   onSessionCompletedUi,
 }: UseFocusTimerOptions) {
-  const [selectedDuration, setSelectedDuration] = useState<FocusDuration>(25);
-  const [timeLeft, setTimeLeft] = useState(25 * 60);
+  const prefs = typeof window !== "undefined" ? loadFocusPreferences() : null;
+  const [selectedDuration, setSelectedDuration] = useState<FocusDuration>(
+    prefs?.duration ?? 25,
+  );
+  const [timeLeft, setTimeLeft] = useState(
+    (prefs?.duration ?? 25) * 60,
+  );
   const [phase, setPhase] = useState<FocusSessionPhase>("idle");
-  const [subject, setSubject] = useState<SubjectCode>(initialSubject);
+  const [subject, setSubject] = useState<SubjectCode>(
+    prefs?.subject ?? initialSubject,
+  );
   const [distractionShield, setDistractionShield] = useState(true);
   const [tabSwitches, setTabSwitches] = useState(0);
   const completeRef = useRef(onSessionComplete);
   const sessionRewardedRef = useRef(false);
 
   completeRef.current = onSessionComplete;
+
+  useEffect(() => {
+    saveFocusPreferences({ duration: selectedDuration, subject });
+  }, [selectedDuration, subject]);
 
   const isActive = phase === "running";
   const isCompleted = phase === "completed";
@@ -76,13 +95,17 @@ export function useFocusTimer({
     sessionRewardedRef.current = true;
     setPhase("completed");
     completeRef.current(selectedDuration, subject);
+    onSessionEnded?.(selectedDuration, treeLabelForDuration(selectedDuration));
     onSessionCompletedUi?.();
-  }, [timeLeft, isActive, selectedDuration, subject, onSessionCompletedUi]);
+  }, [timeLeft, isActive, selectedDuration, subject, onSessionEnded, onSessionCompletedUi]);
 
   const startFocus = useCallback(() => {
     sessionRewardedRef.current = false;
+    if (phase === "idle") {
+      onSessionStart?.(selectedDuration, treeLabelForDuration(selectedDuration));
+    }
     setPhase("running");
-  }, []);
+  }, [phase, onSessionStart, selectedDuration]);
 
   const pauseFocus = useCallback(() => {
     setPhase("paused");
