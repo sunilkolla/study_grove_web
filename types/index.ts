@@ -106,6 +106,8 @@ export interface Flashcard {
   front: string;
   back: string;
   keyKeywords: string[];
+  yearGroup?: YearGroup;
+  sourceQuestionId?: string;
 }
 
 export interface FlashcardReview {

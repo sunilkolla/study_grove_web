@@ -9,6 +9,8 @@ import {
   submitFlashcardReview,
   type DeckSummary,
 } from "@/services/flashcardService";
+import type { ExamBoard, YearGroup } from "@/types";
+import type { DeckTopicSelection } from "./DeckTopicMultiSelect";
 import { awardFlashcardReviewXp } from "@/services/userService";
 import type { Flashcard } from "@/types";
 import { SubjectIcon } from "@/components/common/SubjectIcon";
@@ -52,12 +54,27 @@ const SM2_BUTTONS: {
 
 type FlashcardSessionModalProps = {
   deck: DeckSummary;
+  yearGroup: YearGroup;
+  examBoard: ExamBoard;
+  topicSelection?: DeckTopicSelection;
   onClose: () => void;
   onSessionEnd: () => void;
 };
 
+function topicNodeIdsFromSelection(
+  selection: DeckTopicSelection | undefined,
+): string[] | undefined {
+  if (!selection || selection === "mixed" || selection.length === 0) {
+    return undefined;
+  }
+  return selection;
+}
+
 export function FlashcardSessionModal({
   deck,
+  yearGroup,
+  examBoard,
+  topicSelection = "mixed",
   onClose,
   onSessionEnd,
 }: FlashcardSessionModalProps) {
@@ -69,12 +86,16 @@ export function FlashcardSessionModal({
 
   const loadQueue = useCallback(async () => {
     setLoading(true);
-    const due = await fetchDueFlashcardsForSubject(deck.subject);
+    const due = await fetchDueFlashcardsForSubject(
+      deck.subject,
+      { yearGroup, examBoard },
+      { topicNodeIds: topicNodeIdsFromSelection(topicSelection) },
+    );
     setQueue(due.length > 0 ? due : []);
     setIndex(0);
     setIsFlipped(false);
     setLoading(false);
-  }, [deck.subject]);
+  }, [deck.subject, yearGroup, examBoard, topicSelection]);
 
   useEffect(() => {
     void loadQueue();

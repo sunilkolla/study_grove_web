@@ -3,11 +3,13 @@
 import { useCallback, useState } from "react";
 import { BookOpen, Layers } from "lucide-react";
 import { SubjectIcon } from "@/components/common/SubjectIcon";
-import type {
-  DeckSummary,
-  LeitnerBoxStat,
-} from "@/services/flashcardService";
-import type { YearGroup } from "@/types";
+import type { DeckSummary, LeitnerBoxStat } from "@/services/flashcardService";
+import type { ExamBoard, SubjectCode, YearGroup } from "@/types";
+import {
+  DeckTopicMultiSelect,
+  deckCountsForSelection,
+  type DeckTopicSelection,
+} from "./DeckTopicMultiSelect";
 import { FlashcardSessionModal } from "./FlashcardSessionModal";
 
 const BOX_ACCENT: Record<number, string> = {
@@ -20,24 +22,37 @@ const BOX_ACCENT: Record<number, string> = {
 
 type FlashcardsHubClientProps = {
   yearGroup: YearGroup;
+  examBoard: ExamBoard;
   decks: DeckSummary[];
   leitnerBoxes: LeitnerBoxStat[];
   onRefresh: () => void;
 };
 
+type ActiveSession = {
+  deck: DeckSummary;
+  topicSelection: DeckTopicSelection;
+};
+
 export function FlashcardsHubClient({
   yearGroup,
+  examBoard,
   decks,
   leitnerBoxes,
   onRefresh,
 }: FlashcardsHubClientProps) {
-  const [activeDeck, setActiveDeck] = useState<DeckSummary | null>(null);
+  const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
+  const [topicBySubject, setTopicBySubject] = useState<
+    Partial<Record<SubjectCode, DeckTopicSelection>>
+  >({});
 
   const masteredTotal = decks.reduce((sum, d) => sum + d.mastered, 0);
 
   const handleSessionEnd = useCallback(() => {
     onRefresh();
   }, [onRefresh]);
+
+  const getTopicSelection = (subject: SubjectCode): DeckTopicSelection =>
+    topicBySubject[subject] ?? "mixed";
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -86,54 +101,78 @@ export function FlashcardsHubClient({
         </div>
 
         <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 lg:grid-cols-3">
-          {decks.map((deck) => (
-            <div
-              key={deck.subject}
-              className="group flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition-all hover:border-emerald-500/50 dark:border-[#2e4a73] dark:bg-[#1a2437] dark:hover:border-emerald-400/50"
-            >
-              <div>
-                <div className="mb-3 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="transition-transform group-hover:scale-105">
-                      <SubjectIcon subject={deck.subject} size="lg" />
-                    </div>
-                    <div>
-                      <h3 className="text-xs font-bold text-slate-900 dark:text-[#f4f7fb]">
-                        {deck.label}
-                      </h3>
-                      <p className="text-[11px] text-slate-500 dark:text-[#a0b9d9]">
-                        {deck.totalCards} cards · {deck.dueToday} due today
-                      </p>
-                    </div>
-                  </div>
-                  <span className="font-mono text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                    {deck.progressPercent}%
-                  </span>
-                </div>
-                <div className="mb-3 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-[#141d2e]">
-                  <div
-                    className="h-2 rounded-full bg-emerald-500 transition-all duration-500"
-                    style={{ width: `${deck.progressPercent}%` }}
-                  />
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setActiveDeck(deck)}
-                className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-slate-50 py-2 text-xs font-bold text-slate-700 transition-all hover:bg-emerald-600 hover:text-white active:scale-95 dark:bg-[#22334d] dark:text-[#cdd9ea] dark:hover:bg-emerald-600"
+          {decks.map((deck) => {
+            const topicSelection = getTopicSelection(deck.subject);
+            const { totalCards, dueToday } = deckCountsForSelection(
+              deck,
+              topicSelection,
+            );
+            return (
+              <div
+                key={deck.subject}
+                className="group flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition-all hover:border-emerald-500/50 dark:border-[#2e4a73] dark:bg-[#1a2437] dark:hover:border-emerald-400/50"
               >
-                <BookOpen className="h-3.5 w-3.5" />
-                Review {deck.label}
-              </button>
-            </div>
-          ))}
+                <div>
+                  <div className="mb-3 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="transition-transform group-hover:scale-105">
+                        <SubjectIcon subject={deck.subject} size="lg" />
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-bold text-slate-900 dark:text-[#f4f7fb]">
+                          {deck.label}
+                        </h3>
+                        <p className="text-[11px] text-slate-500 dark:text-[#a0b9d9]">
+                          {totalCards} cards · {dueToday} due today
+                        </p>
+                      </div>
+                    </div>
+                    <span className="font-mono text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                      {deck.progressPercent}%
+                    </span>
+                  </div>
+                  <div className="mb-1 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-[#141d2e]">
+                    <div
+                      className="h-2 rounded-full bg-emerald-500 transition-all duration-500"
+                      style={{ width: `${deck.progressPercent}%` }}
+                    />
+                  </div>
+                  {deck.topics.length > 0 && (
+                    <DeckTopicMultiSelect
+                      topics={deck.topics}
+                      value={topicSelection}
+                      onChange={(next) =>
+                        setTopicBySubject((prev) => ({
+                          ...prev,
+                          [deck.subject]: next,
+                        }))
+                      }
+                    />
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setActiveSession({ deck, topicSelection })
+                  }
+                  className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-slate-50 py-2 text-xs font-bold text-slate-700 transition-all hover:bg-emerald-600 hover:text-white active:scale-95 dark:bg-[#22334d] dark:text-[#cdd9ea] dark:hover:bg-emerald-600"
+                >
+                  <BookOpen className="h-3.5 w-3.5" />
+                  Review {deck.label}
+                </button>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {activeDeck && (
+      {activeSession && (
         <FlashcardSessionModal
-          deck={activeDeck}
-          onClose={() => setActiveDeck(null)}
+          deck={activeSession.deck}
+          yearGroup={yearGroup}
+          examBoard={examBoard}
+          topicSelection={activeSession.topicSelection}
+          onClose={() => setActiveSession(null)}
           onSessionEnd={handleSessionEnd}
         />
       )}

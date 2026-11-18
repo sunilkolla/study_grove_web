@@ -53,7 +53,10 @@ export async function buildDailySuggestions(
     }
   }
 
-  const decks = await fetchDeckSummaries();
+  const decks = await fetchDeckSummaries({
+    yearGroup: stats.yearGroup,
+    examBoard: stats.examBoard ?? "AQA",
+  });
   for (const deck of decks) {
     if (deck.dueToday <= 0) continue;
     const id = `suggest-flash-${deck.subject}-${forDate}`;

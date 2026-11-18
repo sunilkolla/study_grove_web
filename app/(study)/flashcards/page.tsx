@@ -8,15 +8,18 @@ import { fetchUserStats } from "@/services/userService";
 
 export default async function FlashcardsPage() {
   await connection();
-  const [stats, decks, leitnerBoxes] = await Promise.all([
-    fetchUserStats(),
-    fetchDeckSummaries(),
-    fetchLeitnerBoxStats(),
+  const stats = await fetchUserStats();
+  const examBoard = stats.examBoard ?? "AQA";
+  const filters = { yearGroup: stats.yearGroup, examBoard };
+  const [decks, leitnerBoxes] = await Promise.all([
+    fetchDeckSummaries(filters),
+    fetchLeitnerBoxStats(filters),
   ]);
 
   return (
     <FlashcardsPageClient
       initialYearGroup={stats.yearGroup}
+      initialExamBoard={examBoard}
       initialDecks={decks}
       initialLeitnerBoxes={leitnerBoxes}
     />
