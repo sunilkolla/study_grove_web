@@ -3,16 +3,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { PracticeQuestion, YearGroup } from "@/types";
-import {
-  filterQuestionsForScope,
-  type TopicPracticeScope,
-} from "@/lib/topic/topicPractice";
+import type { TopicPracticeScope } from "@/lib/topic/topicPractice";
 import { SUBTOPICS_BY_ID } from "@/data/gcseSyllabus";
 import {
   QUIZ_SUBJECT_FILTERS,
   subjectFilterLabel,
   type SubjectFilter,
 } from "@/lib/quiz/subjectFilters";
+import {
+  questionsForSubjectFilter,
+  subjectQuestionCount,
+} from "@/lib/quiz/questionPool";
 import { QuizCard } from "./QuizCard";
 
 type PracticeQuizSectionProps = {
@@ -37,15 +38,26 @@ export function PracticeQuizSection({
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [floatingXp, setFloatingXp] = useState<number | null>(null);
 
-  const scopedQuestions = useMemo(
-    () => filterQuestionsForScope(questions, practiceScope, SUBTOPICS_BY_ID),
-    [questions, practiceScope],
+  const filteredQuestions = useMemo(
+    () =>
+      questionsForSubjectFilter(
+        questions,
+        practiceScope,
+        subjectFilter,
+        SUBTOPICS_BY_ID,
+      ),
+    [questions, practiceScope, subjectFilter],
   );
 
-  const filteredQuestions = useMemo(() => {
-    if (subjectFilter === "ALL") return scopedQuestions;
-    return scopedQuestions.filter((q) => q.subject === subjectFilter);
-  }, [scopedQuestions, subjectFilter]);
+  const visibleSubjectFilters = useMemo(() => {
+    return QUIZ_SUBJECT_FILTERS.filter((f) => {
+      if (f === "ALL") return true;
+      if (f === "COMPUTER_SCIENCE") {
+        return subjectQuestionCount(questions, f) > 0;
+      }
+      return true;
+    });
+  }, [questions]);
 
   const activeQuestion = filteredQuestions[activeIndex] ?? filteredQuestions[0];
 
@@ -83,6 +95,7 @@ export function PracticeQuizSection({
   };
 
   useEffect(() => {
+    setSubjectFilter("ALL");
     setActiveIndex(0);
     resetQuestionState();
   }, [yearGroup, practiceScope, resetQuestionState]);
@@ -132,20 +145,41 @@ export function PracticeQuizSection({
       )}
 
       <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-        {QUIZ_SUBJECT_FILTERS.map((sub) => (
-          <button
-            key={sub}
-            type="button"
-            onClick={() => handleSubjectChange(sub)}
-            className={`whitespace-nowrap rounded-lg px-3 py-1.5 font-semibold transition-all active:scale-95 ${
-              subjectFilter === sub
-                ? "bg-[#10B981] text-white shadow-sm"
-                : "bg-white text-slate-700 hover:bg-slate-100 dark:bg-[#1a2437] dark:text-[#a0b9d9] dark:hover:bg-[#273853]"
-            }`}
-          >
-            {subjectFilterLabel(sub)}
-          </button>
-        ))}
+        {visibleSubjectFilters.map((sub) => {
+          const count =
+            sub === "ALL"
+              ? questionsForSubjectFilter(
+                  questions,
+                  practiceScope,
+                  "ALL",
+                  SUBTOPICS_BY_ID,
+                ).length
+              : subjectQuestionCount(questions, sub);
+          const disabled = sub !== "ALL" && count === 0;
+          return (
+            <button
+              key={sub}
+              type="button"
+              disabled={disabled}
+              title={
+                disabled
+                  ? "No questions for your year and exam board yet"
+                  : undefined
+              }
+              onClick={() => handleSubjectChange(sub)}
+              className={`whitespace-nowrap rounded-lg px-3 py-1.5 font-semibold transition-all active:scale-95 ${
+                disabled
+                  ? "cursor-not-allowed opacity-40"
+                  : subjectFilter === sub
+                    ? "bg-[#10B981] text-white shadow-sm"
+                    : "bg-white text-slate-700 hover:bg-slate-100 dark:bg-[#1a2437] dark:text-[#a0b9d9] dark:hover:bg-[#273853]"
+              }`}
+            >
+              {subjectFilterLabel(sub)}
+              {sub !== "ALL" ? ` (${count})` : ` (${count})`}
+            </button>
+          );
+        })}
       </div>
 
       {activeQuestion && filteredQuestions.length > 0 ? (
@@ -165,7 +199,9 @@ export function PracticeQuizSection({
         />
       ) : (
         <p className="rounded-xl border border-dashed border-slate-300 bg-white/80 p-8 text-center text-sm text-slate-500 dark:border-[#2e4a73] dark:bg-[#1a2437]/80 dark:text-[#a0b9d9]">
-          No questions for this topic yet. Pick another subtopic or subject filter.
+          {subjectFilter === "ALL"
+            ? "No questions for this topic yet. Pin another subtopic or browse by subject."
+            : `No ${subjectFilterLabel(subjectFilter)} questions for your year and exam board. Try another subject or open the question bank.`}
         </p>
       )}
 

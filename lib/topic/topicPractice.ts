@@ -7,17 +7,20 @@ export type TopicPracticeScope =
   | { mode: "subject"; subject: string }
   | { mode: "all" };
 
+/** e.g. BIO-AQA-4.1.1 ↔ subtopic id BIOLOGY-4.1.1, code 4.1.1 */
 function topicCodeMatchesSubtopic(
   questionTopicCode: string,
   subtopic: SyllabusSubtopic,
 ): boolean {
   const dotted = subtopic.code;
-  const dashed = subtopic.code.replace(".", "-");
+  const dashed = subtopic.code.replaceAll(".", "-");
+  const upper = questionTopicCode.toUpperCase();
   return (
-    questionTopicCode.includes(dotted) ||
-    questionTopicCode.includes(dashed) ||
-    questionTopicCode.endsWith(`${dashed}`) ||
-    questionTopicCode.endsWith(`${dotted}`)
+    upper.includes(dotted) ||
+    upper.includes(dashed) ||
+    upper.includes(subtopic.id) ||
+    upper.endsWith(dotted) ||
+    upper.endsWith(dashed)
   );
 }
 
