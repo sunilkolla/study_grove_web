@@ -12,6 +12,10 @@ import {
 } from "@/data/gcseSyllabus";
 import type { TopicPracticeScope } from "@/lib/topic/topicPractice";
 import {
+  consumePendingPracticeSubtopic,
+  PRACTICE_SUBTOPIC_PRESET,
+} from "@/lib/practiceEvents";
+import {
   STORAGE_SYLLABUS_FOCUS,
   notifySyllabusFocusChanged,
 } from "@/lib/studyFocusBridge";
@@ -94,6 +98,21 @@ export function useStudyTopicSelection() {
     if (main) setSelectedMainTopicId(main.id);
     const st = getSubtopicById(focusId);
     if (st) setPracticeScope({ mode: "subtopic", subtopic: st });
+    const pendingPractice = consumePendingPracticeSubtopic();
+    if (pendingPractice) {
+      const pst = getSubtopicById(pendingPractice);
+      const syllabusSub = pst ? syllabusSubjectForSubtopic(pst) : undefined;
+      if (pst && syllabusSub) {
+        const nextMap = { ...map, [syllabusSub]: pendingPractice };
+        setCurrentBySubject(nextMap);
+        persistMap(nextMap);
+        setFocusSubject(syllabusSub);
+        setSyllabusSubject(syllabusSub);
+        const pmain = getMainTopicForSubtopic(pendingPractice);
+        if (pmain) setSelectedMainTopicId(pmain.id);
+        setPracticeScope({ mode: "subtopic", subtopic: pst });
+      }
+    }
     setHydrated(true);
   }, []);
 
@@ -156,6 +175,19 @@ export function useStudyTopicSelection() {
     if (syllabusSub) setFocus(syllabusSub);
     setPracticeScope({ mode: "subtopic", subtopic: st });
   }, [setFocus]);
+
+  useEffect(() => {
+    const onPreset = (e: Event) => {
+      const id = (e as CustomEvent<{ subtopicId: string }>).detail?.subtopicId;
+      if (!id) return;
+      const st = getSubtopicById(id);
+      if (!st) return;
+      pinAsCurrent(id);
+      setPracticeScope({ mode: "subtopic", subtopic: st });
+    };
+    window.addEventListener(PRACTICE_SUBTOPIC_PRESET, onPreset);
+    return () => window.removeEventListener(PRACTICE_SUBTOPIC_PRESET, onPreset);
+  }, [pinAsCurrent]);
 
   const practiceCurrentTopic = useCallback(() => {
     const st = getSubtopicById(currentBySubject[focusSubject]);

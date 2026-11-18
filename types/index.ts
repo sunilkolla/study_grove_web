@@ -40,14 +40,61 @@ export interface PracticeQuestion {
   xpReward: number;
 }
 
-// —— Tasks ——
+// —— Tasks / revision schedule ——
+export type RevisionTaskKind =
+  | "practice"
+  | "flashcards"
+  | "focus"
+  | "review"
+  | "custom";
+
+export type RevisionTaskSource = "manual" | "suggested" | "year_plan";
+
+export type AcademicTermId = "autumn" | "spring" | "summer";
+
 export interface TaskItem {
   id: string;
   title: string;
   subject: SubjectCode;
+  /** ISO date YYYY-MM-DD */
+  dueDate: string;
+  /** Human label for dock (derived from dueDate). */
   dueDateLabel: string;
   isCompleted: boolean;
   priority?: "high" | "medium" | "low";
+  source: RevisionTaskSource;
+  kind: RevisionTaskKind;
+  topicNodeId?: string;
+  plannedMinutes?: number;
+  /** ISO Monday of the week this task belongs to. */
+  weekOf?: string;
+  termId?: AcademicTermId;
+}
+
+/** Alias for schedule planning copy. */
+export type RevisionTask = TaskItem;
+
+export type TermGoalAssignment = {
+  termId: AcademicTermId;
+  syllabusSubject: string;
+  mainTopicId: string;
+  subtopicIds?: string[];
+  note?: string;
+};
+
+export type PlanMilestone = {
+  id: string;
+  date: string;
+  label: string;
+  type: "mock" | "exam" | "custom";
+};
+
+export interface AcademicYearPlan {
+  yearLabel: string;
+  yearGroup: YearGroup;
+  examBoard: ExamBoard;
+  termGoals: TermGoalAssignment[];
+  milestones: PlanMilestone[];
 }
 
 // —— Flashcards (SM-2 ready) ——

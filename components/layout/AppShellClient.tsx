@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { FOCUS_PRESET, OPEN_FOCUS_TIMER } from "@/lib/focusEvents";
 import { subjectCodeToLabel } from "@/lib/studyFocusBridge";
 import type { FocusMode } from "@/lib/focusPreferences";
+import { TASKS_CHANGED, notifyTasksChanged } from "@/lib/scheduleEvents";
 import { SHELL_DATA_CHANGED, notifyShellDataChanged } from "@/lib/shellEvents";
 import { FloatingFocusBubble } from "@/components/focus/FloatingFocusBubble";
 import { FocusSessionToast } from "@/components/focus/FocusSessionToast";
@@ -103,6 +104,9 @@ export function AppShellClient({ children }: AppShellClientProps) {
 
   useEffect(() => {
     void syncTasks();
+    const onTasksChanged = () => void syncTasks();
+    window.addEventListener(TASKS_CHANGED, onTasksChanged);
+    return () => window.removeEventListener(TASKS_CHANGED, onTasksChanged);
   }, [pathname, syncTasks]);
 
   const handleToggleTask = useCallback(
@@ -116,14 +120,16 @@ export function AppShellClient({ children }: AppShellClientProps) {
         setHeaderStats(toShellStats(nextUser));
       }
       notifyShellDataChanged();
+      notifyTasksChanged();
     },
     [],
   );
 
   const handleAddTask = useCallback(
-    async (title: string, subject: SubjectCode, dueDateLabel: string) => {
-      const nextTasks = await createTask({ title, subject, dueDateLabel });
+    async (input: Parameters<typeof createTask>[0]) => {
+      const nextTasks = await createTask(input);
       setTasks(nextTasks);
+      notifyTasksChanged();
     },
     [],
   );
@@ -247,11 +253,8 @@ export function AppShellClient({ children }: AppShellClientProps) {
             stats={dockStats}
             tasks={tasks}
             onToggleTask={(id) => void handleToggleTask(id)}
-            onAddTask={(title, subject, due) =>
-              void handleAddTask(title, subject, due)
-            }
+            onAddTask={(input) => void handleAddTask(input)}
             onQuickPractice={handleQuickPractice}
-            onQuickFocusStart={() => setFocusModalOpen(true)}
           />
         </div>
       </div>

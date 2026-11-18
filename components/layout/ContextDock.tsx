@@ -1,29 +1,43 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import Link from "next/link";
+import { FormEvent, useEffect, useState } from "react";
 import {
   BookOpen,
+  Calendar,
   CheckSquare,
-  Clock,
   Plus,
   Square,
   Target,
 } from "lucide-react";
 import { yearGroupProfiles } from "@/data/yearGroupProfiles";
-import type { SubjectCode, TaskItem, UserStats } from "@/types";
+import { FOCUS_SUBJECT_OPTIONS } from "@/lib/focusSubjectOptions";
+import {
+  dismissSuggestionId,
+  loadDismissedSuggestionIds,
+} from "@/lib/dismissedSuggestions";
+import {
+  isUpcomingWithinDays,
+  todayIso,
+} from "@/lib/revisionDates";
+import { TASK_KIND_META } from "@/lib/taskDisplay";
+import {
+  buildDailySuggestions,
+  type SuggestionDraft,
+} from "@/services/revisionSuggester";
+import type { CreateTaskInput } from "@/services/taskService";
+import type { RevisionTaskKind, SubjectCode, TaskItem, UserStats } from "@/types";
 import type { TaskListFilter } from "@/services/taskService";
+import { RevisionTaskRow } from "@/components/schedule/RevisionTaskRow";
+import { createTask } from "@/services/taskService";
+import { notifyTasksChanged } from "@/lib/scheduleEvents";
 
 type ContextDockProps = {
   stats: UserStats;
   tasks: TaskItem[];
   onToggleTask: (taskId: string) => void;
-  onAddTask: (
-    title: string,
-    subject: SubjectCode,
-    dueDateLabel: string,
-  ) => void;
+  onAddTask: (input: CreateTaskInput) => void;
   onQuickPractice: () => void;
-  onQuickFocusStart: () => void;
 };
 
 export function ContextDock({
@@ -32,26 +46,34 @@ export function ContextDock({
   onToggleTask,
   onAddTask,
   onQuickPractice,
-  onQuickFocusStart,
 }: ContextDockProps) {
   const [taskFilter, setTaskFilter] = useState<TaskListFilter>("all");
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskSubject, setNewTaskSubject] = useState<SubjectCode>("MATHS");
-  const [newTaskDue, setNewTaskDue] = useState("by Today");
+  const [newTaskDue, setNewTaskDue] = useState(todayIso());
+  const [newTaskKind, setNewTaskKind] = useState<RevisionTaskKind>("custom");
+  const [suggestions, setSuggestions] = useState<SuggestionDraft[]>([]);
 
   const profile = yearGroupProfiles[stats.yearGroup];
   const targetQuestions = profile?.targetQuestions ?? stats.targetDailyQuestions;
+  const today = todayIso();
 
   const filteredTasks = tasks.filter((task) => {
-    if (taskFilter === "today") {
-      return task.dueDateLabel.toLowerCase().includes("today");
-    }
+    if (taskFilter === "today") return task.dueDate === today;
     if (taskFilter === "upcoming") {
-      return !task.dueDateLabel.toLowerCase().includes("today");
+      return isUpcomingWithinDays(task.dueDate, 14);
     }
     return true;
   });
+
+  useEffect(() => {
+    void (async () => {
+      const drafts = await buildDailySuggestions(today);
+      const dismissed = loadDismissedSuggestionIds();
+      setSuggestions(drafts.filter((d) => !dismissed.has(d.id)));
+    })();
+  }, [today, tasks]);
 
   const completedCount = tasks.filter((t) => t.isCompleted).length;
   const questionsProgressPercent = Math.min(
@@ -68,9 +90,35 @@ export function ContextDock({
   const handleCreateTask = (e: FormEvent) => {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
-    onAddTask(newTaskTitle.trim(), newTaskSubject, newTaskDue);
+    onAddTask({
+      title: newTaskTitle.trim(),
+      subject: newTaskSubject,
+      dueDate: newTaskDue,
+      kind: newTaskKind,
+      source: "manual",
+    });
     setNewTaskTitle("");
     setIsAddingTask(false);
+  };
+
+  const acceptSuggestion = async (s: SuggestionDraft) => {
+    await createTask({
+      id: s.id,
+      title: s.title,
+      subject: s.subject,
+      dueDate: s.dueDate,
+      kind: s.kind,
+      source: "suggested",
+      topicNodeId: s.topicNodeId,
+      plannedMinutes: s.plannedMinutes,
+    });
+    notifyTasksChanged();
+    setSuggestions((prev) => prev.filter((x) => x.id !== s.id));
+  };
+
+  const dismissSuggestion = (id: string) => {
+    dismissSuggestionId(id);
+    setSuggestions((prev) => prev.filter((x) => x.id !== id));
   };
 
   return (
@@ -115,31 +163,6 @@ export function ContextDock({
             <BookOpen className="h-3 w-3" />
             Quick Practice Next (+25 XP)
           </button>
-
-          <div className="border-t border-slate-200 pt-2 dark:border-[#2e4a73]">
-            <div className="mb-1 flex items-baseline justify-between text-xs">
-              <span className="font-semibold text-slate-700 dark:text-[#cdd9ea]">
-                Focus target
-              </span>
-              <span className="font-mono text-[10px] font-bold tabular-nums text-slate-600 dark:text-[#a0b9d9]">
-                {stats.todayFocusMins} / {stats.targetDailyFocusMins} min
-              </span>
-            </div>
-            <div className="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-[#1a2437]">
-              <div
-                className="h-full rounded-full bg-[#1E293B] transition-all duration-500 dark:bg-slate-300"
-                style={{ width: `${focusProgressPercent}%` }}
-              />
-            </div>
-            <button
-              type="button"
-              onClick={onQuickFocusStart}
-              className="flex w-full items-center justify-center gap-1 rounded-lg bg-[#1E293B] py-1.5 text-[11px] font-semibold text-white transition-colors hover:bg-slate-800"
-            >
-              <Clock className="h-3 w-3" />
-              Quick 25m Focus
-            </button>
-          </div>
         </div>
 
         <div className="flex flex-col">
@@ -150,15 +173,36 @@ export function ContextDock({
                 {completedCount}/{tasks.length}
               </span>
             </div>
-            <button
-              type="button"
-              onClick={() => setIsAddingTask((v) => !v)}
-              className="rounded p-1 text-slate-500 transition-colors hover:bg-slate-100 dark:text-[#a0b9d9] dark:hover:bg-[#273853]"
-              title="Add task"
-            >
-              <Plus className="h-3.5 w-3.5" />
-            </button>
+            <div className="flex items-center gap-1">
+              <Link
+                href="/schedule"
+                className="rounded p-1 text-slate-500 transition-colors hover:bg-slate-100 dark:text-[#a0b9d9] dark:hover:bg-[#273853]"
+                title="Open schedule"
+              >
+                <Calendar className="h-3.5 w-3.5" />
+              </Link>
+              <button
+                type="button"
+                onClick={() => setIsAddingTask((v) => !v)}
+                className="rounded p-1 text-slate-500 transition-colors hover:bg-slate-100 dark:text-[#a0b9d9] dark:hover:bg-[#273853]"
+                title="Add task"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
+
+          {suggestions.length > 0 && (
+            <div className="mb-2 rounded-lg border border-emerald-200 bg-emerald-50/80 p-2 text-[10px] dark:border-emerald-800 dark:bg-emerald-950/30">
+              <p className="mb-1 font-bold text-emerald-800 dark:text-emerald-300">
+                {suggestions.length} suggestion{suggestions.length === 1 ? "" : "s"}{" "}
+                for today
+              </p>
+              <Link href="/schedule" className="font-semibold text-emerald-700 underline dark:text-emerald-400">
+                Review in Schedule →
+              </Link>
+            </div>
+          )}
 
           <div className="mb-2 grid grid-cols-3 gap-1 rounded-lg bg-slate-100 p-0.5 text-center text-[10px] font-medium text-slate-500 dark:bg-[#273853] dark:text-[#a0b9d9]">
             {(["all", "today", "upcoming"] as const).map((filter) => (
@@ -190,28 +234,38 @@ export function ContextDock({
                 className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-slate-800 placeholder:text-slate-400 focus:outline-none dark:border-[#2e4a73] dark:bg-[#1a2437] dark:text-[#f4f7fb]"
                 autoFocus
               />
+              <select
+                value={newTaskKind}
+                onChange={(e) =>
+                  setNewTaskKind(e.target.value as RevisionTaskKind)
+                }
+                className="w-full rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] dark:border-[#2e4a73] dark:bg-[#1a2437]"
+              >
+                <option value="practice">Practice</option>
+                <option value="flashcards">Flashcards</option>
+                <option value="focus">Focus</option>
+                <option value="custom">Custom</option>
+              </select>
               <div className="flex items-center gap-1.5">
                 <select
                   value={newTaskSubject}
                   onChange={(e) =>
                     setNewTaskSubject(e.target.value as SubjectCode)
                   }
-                  className="rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] text-slate-700 dark:border-[#2e4a73] dark:bg-[#1a2437] dark:text-[#cdd9ea]"
+                  className="min-w-0 flex-1 rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] text-slate-700 dark:border-[#2e4a73] dark:bg-[#1a2437] dark:text-[#cdd9ea]"
                 >
-                  <option value="MATHS">Maths</option>
-                  <option value="BIOLOGY">Biology</option>
-                  <option value="CHEMISTRY">Chemistry</option>
-                  <option value="PHYSICS">Physics</option>
-                  <option value="COMPUTER_SCIENCE">CS</option>
+                  {FOCUS_SUBJECT_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
                 </select>
-                <select
+                <input
+                  type="date"
                   value={newTaskDue}
                   onChange={(e) => setNewTaskDue(e.target.value)}
-                  className="rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] text-slate-700 dark:border-[#2e4a73] dark:bg-[#1a2437] dark:text-[#cdd9ea]"
-                >
-                  <option value="by Today">by Today</option>
-                  <option value="by Tomorrow">by Tomorrow</option>
-                </select>
+                  className="rounded border border-slate-200 bg-white px-1 py-0.5 text-[10px] dark:border-[#2e4a73] dark:bg-[#1a2437]"
+                />
                 <button
                   type="submit"
                   className="ml-auto rounded bg-[#10B981] px-2 py-0.5 text-[10px] font-semibold text-white"
@@ -222,50 +276,64 @@ export function ContextDock({
             </form>
           )}
 
-          <div className="max-h-[min(50vh,420px)] space-y-1 overflow-y-auto pr-0.5">
-            {filteredTasks.length === 0 ? (
+          <div className="max-h-[min(40vh,360px)] space-y-1 overflow-y-auto pr-0.5">
+            {suggestions.slice(0, 2).map((s) => (
+              <RevisionTaskRow
+                key={s.id}
+                item={s}
+                isSuggestion
+                onAcceptSuggestion={() => void acceptSuggestion(s)}
+                onDismiss={() => dismissSuggestion(s.id)}
+              />
+            ))}
+            {filteredTasks.length === 0 && suggestions.length === 0 ? (
               <p className="py-6 text-center text-[11px] text-slate-400 dark:text-[#a0b9d9]">
                 No tasks for this filter.
               </p>
             ) : (
-              filteredTasks.map((task) => (
-                <button
-                  key={task.id}
-                  type="button"
-                  onClick={() => onToggleTask(task.id)}
-                  className={`group flex w-full cursor-pointer items-start gap-2 rounded-lg border p-2 text-left transition-all ${
-                    task.isCompleted
-                      ? "border-slate-100 bg-slate-50/80 opacity-70 dark:border-[#2e4a73]/40 dark:bg-[#273853]/40"
-                      : "border-slate-200 bg-white hover:border-[#10B981] dark:border-[#2e4a73] dark:bg-[#273853] dark:hover:border-emerald-500"
-                  }`}
-                >
-                  <span className="mt-0.5 shrink-0 text-emerald-600">
-                    {task.isCompleted ? (
-                      <CheckSquare className="h-3.5 w-3.5 fill-emerald-100 text-emerald-600 dark:fill-emerald-950" />
-                    ) : (
-                      <Square className="h-3.5 w-3.5 text-slate-300 group-hover:text-[#10B981] dark:text-[#a0b9d9]" />
-                    )}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span
-                      className={`block text-[11px] leading-tight ${
-                        task.isCompleted
-                          ? "text-slate-400 line-through"
-                          : "font-medium text-slate-800 dark:text-[#f4f7fb]"
-                      }`}
-                    >
-                      {task.title}
+              filteredTasks.map((task) => {
+                const meta = TASK_KIND_META[task.kind];
+                const Icon = meta.Icon;
+                return (
+                  <button
+                    key={task.id}
+                    type="button"
+                    onClick={() => onToggleTask(task.id)}
+                    className={`group flex w-full cursor-pointer items-start gap-2 rounded-lg border p-2 text-left transition-all ${
+                      task.isCompleted
+                        ? "border-slate-100 bg-slate-50/80 opacity-70 dark:border-[#2e4a73]/40 dark:bg-[#273853]/40"
+                        : "border-slate-200 bg-white hover:border-[#10B981] dark:border-[#2e4a73] dark:bg-[#273853] dark:hover:border-emerald-500"
+                    }`}
+                  >
+                    <span className="mt-0.5 shrink-0 text-emerald-600">
+                      {task.isCompleted ? (
+                        <CheckSquare className="h-3.5 w-3.5 fill-emerald-100 text-emerald-600 dark:fill-emerald-950" />
+                      ) : (
+                        <Square className="h-3.5 w-3.5 text-slate-300 group-hover:text-[#10B981] dark:text-[#a0b9d9]" />
+                      )}
                     </span>
-                    <span className="mt-0.5 flex items-center gap-1.5 text-[9px] text-slate-400 dark:text-[#a0b9d9]">
-                      <span className="font-semibold text-[#10B981]">
-                        {task.subject}
+                    <span className="min-w-0 flex-1">
+                      <span
+                        className={`block text-[11px] leading-tight ${
+                          task.isCompleted
+                            ? "text-slate-400 line-through"
+                            : "font-medium text-slate-800 dark:text-[#f4f7fb]"
+                        }`}
+                      >
+                        {task.title}
                       </span>
-                      <span>·</span>
-                      <span>{task.dueDateLabel}</span>
+                      <span className="mt-0.5 flex items-center gap-1.5 text-[9px] text-slate-400 dark:text-[#a0b9d9]">
+                        <Icon className="h-3 w-3 text-[#10B981]" />
+                        <span className="font-semibold text-[#10B981]">
+                          {task.subject.replace(/_/g, " ")}
+                        </span>
+                        <span>·</span>
+                        <span>{task.dueDateLabel}</span>
+                      </span>
                     </span>
-                  </span>
-                </button>
-              ))
+                  </button>
+                );
+              })
             )}
           </div>
         </div>
