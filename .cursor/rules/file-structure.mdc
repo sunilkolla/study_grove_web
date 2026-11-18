@@ -1,0 +1,48 @@
+---
+description: StudyGrove app/, components/, data/, services/, types/ layout and data flow
+alwaysApply: true
+---
+
+# StudyGrove file structure
+
+Use this map when adding features. Prefer the existing layer—not a new top-level folder—unless the concern is genuinely new.
+
+## Layers
+
+| Layer | Role | Put here |
+|-------|------|----------|
+| `app/` | Routes (Next.js App Router) | Thin **Server Component** pages: `await connection()`, fetch via `services/`, pass props to `*Client` components. Study routes live under `app/(study)/` and wrap in `AppShell` via `app/(study)/layout.tsx`. |
+| `components/` | UI | Feature folders (`focus/`, `schedule/`, `quiz/`, `topic/`, …). `layout/` = shell (sidebar, dock, header). `*Client.tsx` = `"use client"` interactivity; keep pages thin. |
+| `data/` | Static content | Curriculum (`gcseSyllabus.ts`), mocks (`mockQuestions`, `mockTasks`, …), profiles. **No React imports.** Imported by services or components for read-only data. |
+| `services/` | App logic & I/O | Async APIs (`fetchTasks`, `completeFocusSession`, …). **`mockSessionStore.ts`** holds in-memory state until Supabase; mutate only through services. |
+| `types/` | Shared TypeScript | Domain types (`TaskItem`, `UserStats`, `ForestTree`, …). Import as `@/types` (re-exported from root `types.ts`). |
+
+## Related (not the five folders)
+
+- `lib/` — cross-cutting helpers, browser events (`shellEvents`, `scheduleEvents`, `focusEvents`), prefs, SM-2, date utilities. No domain aggregates.
+- `hooks/` — client hooks (e.g. `useStudyTopicSelection`) tied to `localStorage` + syllabus.
+
+## Data flow
+
+```
+app/(study)/*/page.tsx  →  services/*  →  mockSessionStore (session state)
+                      ↘  data/* (seed / static)
+components/*Client      →  services/* (reads/writes on interaction)
+                      ↘  lib/* (events, formatting)
+```
+
+## Conventions
+
+1. **New route**: add `app/(study)/<feature>/page.tsx` + `components/<feature>/<Feature>Client.tsx`.
+2. **New entity**: type in `types/index.ts`, seed in `data/mock*.ts`, accessors in `services/<feature>Service.ts`, wire store in `mockSessionStore.ts` if persisted.
+3. **Shell-wide behavior** (tasks, focus timer, XP): touch `AppShellClient`, `ContextDock`, and the relevant `lib/*Events.ts` so dock + pages stay in sync.
+4. **Do not** put business rules in `app/` pages or duplicate mocks inside components—call services.
+
+```typescript
+// ✅ Page pattern (server)
+import { fetchTasks } from "@/services/taskService";
+import { ScheduleHubClient } from "@/components/schedule/ScheduleHubClient";
+
+// ✅ Type import
+import type { TaskItem } from "@/types";
+```

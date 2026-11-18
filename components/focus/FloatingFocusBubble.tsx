@@ -32,7 +32,7 @@ export function FloatingFocusBubble({
   return (
     <aside
       aria-label="Deep focus timer"
-      className="pointer-events-none fixed bottom-6 right-4 z-40 sm:right-[340px]"
+      className="pointer-events-none fixed bottom-6 right-4 z-40 sm:right-[30px]"
     >
       <div className="pointer-events-auto flex items-stretch gap-0 overflow-hidden rounded-2xl border border-emerald-950/60 bg-gradient-to-r from-[#0c4a3e] to-[#1e3a34] text-white shadow-xl ring-2 ring-emerald-500/15">
         <button
