@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { SHELL_DATA_CHANGED } from "@/lib/shellEvents";
+import { fetchPracticeQuestions } from "@/services/questionService";
+import { fetchUserStats } from "@/services/userService";
 import type { ExamBoard, PracticeQuestion, YearGroup } from "@/types";
 import {
   QUIZ_SUBJECT_FILTERS,
@@ -17,11 +20,38 @@ type QuizzesPageClientProps = {
 };
 
 export function QuizzesPageClient({
-  questions,
-  yearGroup,
-  examBoard,
+  questions: initialQuestions,
+  yearGroup: initialYearGroup,
+  examBoard: initialExamBoard,
 }: QuizzesPageClientProps) {
+  const [questions, setQuestions] = useState(initialQuestions);
+  const [yearGroup, setYearGroup] = useState(initialYearGroup);
+  const [examBoard, setExamBoard] = useState(initialExamBoard);
   const [subjectFilter, setSubjectFilter] = useState<SubjectFilter>("ALL");
+
+  const reloadPool = useCallback(async () => {
+    const stats = await fetchUserStats();
+    const next = await fetchPracticeQuestions({
+      yearGroup: stats.yearGroup,
+      examBoard: stats.examBoard ?? "AQA",
+    });
+    setQuestions(next);
+    setYearGroup(stats.yearGroup);
+    setExamBoard(stats.examBoard ?? "AQA");
+  }, []);
+
+  useEffect(() => {
+    setQuestions(initialQuestions);
+    setYearGroup(initialYearGroup);
+    setExamBoard(initialExamBoard);
+  }, [initialQuestions, initialYearGroup, initialExamBoard]);
+
+  useEffect(() => {
+    void reloadPool();
+    const onShell = () => void reloadPool();
+    window.addEventListener(SHELL_DATA_CHANGED, onShell);
+    return () => window.removeEventListener(SHELL_DATA_CHANGED, onShell);
+  }, [reloadPool]);
 
   const visibleSubjectFilters = useMemo(() => {
     return QUIZ_SUBJECT_FILTERS.filter((f) => {

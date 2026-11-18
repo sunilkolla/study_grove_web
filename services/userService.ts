@@ -1,10 +1,39 @@
+import {
+  parsePersistedProfile,
+  persistUserProfileOnClient,
+  readUserProfileFromClientStorage,
+  USER_PROFILE_COOKIE,
+} from "@/lib/userProfilePersist";
 import type { ExamBoard, ShellUserStats, UserStats, YearGroup } from "@/types";
 import {
   applyUserProfile,
-  applyYearGroupToStats,
   getSessionUserStats,
   setSessionUserStats,
 } from "./mockSessionStore";
+
+async function mergePersistedProfile(stats: UserStats): Promise<UserStats> {
+  if (typeof window !== "undefined") {
+    const persisted = readUserProfileFromClientStorage();
+    if (persisted) {
+      return applyUserProfile(persisted.yearGroup, persisted.examBoard);
+    }
+    return stats;
+  }
+  try {
+    const { cookies } = await import("next/headers");
+    const jar = await cookies();
+    const raw = jar.get(USER_PROFILE_COOKIE)?.value;
+    const persisted = parsePersistedProfile(
+      raw ? decodeURIComponent(raw) : null,
+    );
+    if (persisted) {
+      return applyUserProfile(persisted.yearGroup, persisted.examBoard);
+    }
+  } catch {
+    /* cookies() unavailable outside RSC */
+  }
+  return stats;
+}
 
 export function toShellStats(stats: UserStats): ShellUserStats {
   return {
@@ -24,7 +53,7 @@ export function toShellStats(stats: UserStats): ShellUserStats {
 
 /** Mock-backed; returns a Promise for Supabase-shaped call sites. */
 export async function fetchUserStats(): Promise<UserStats> {
-  return getSessionUserStats();
+  return mergePersistedProfile(getSessionUserStats());
 }
 
 export async function fetchShellUserStats(): Promise<ShellUserStats> {
@@ -48,6 +77,12 @@ export async function updateUserProfile(
 ): Promise<UserStats> {
   const next = applyUserProfile(update.yearGroup, update.examBoard);
   setSessionUserStats(next);
+  if (typeof window !== "undefined") {
+    persistUserProfileOnClient({
+      yearGroup: update.yearGroup,
+      examBoard: update.examBoard,
+    });
+  }
   return next;
 }
 

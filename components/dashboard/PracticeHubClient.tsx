@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { StudyStreakIndicator } from "@/components/dashboard/StudyStreakIndicator";
 import { PracticeQuizSection } from "@/components/quiz/PracticeQuizSection";
 import { CurrentlyStudyingBanner } from "@/components/topic/CurrentlyStudyingBanner";
@@ -9,8 +9,9 @@ import { SyllabusNavigator } from "@/components/topic/SyllabusNavigator";
 import { SyllabusNavigatorPanel } from "@/components/topic/SyllabusNavigatorPanel";
 import { getSubtopicById } from "@/data/gcseSyllabus";
 import { useStudyTopicSelection } from "@/hooks/useStudyTopicSelection";
-import { notifyShellDataChanged } from "@/lib/shellEvents";
-import { recordQuestionAnswered } from "@/services/userService";
+import { notifyShellDataChanged, SHELL_DATA_CHANGED } from "@/lib/shellEvents";
+import { fetchPracticeQuestions } from "@/services/questionService";
+import { fetchUserStats, recordQuestionAnswered } from "@/services/userService";
 import type { PracticeQuestion, UserStats, YearGroup } from "@/types";
 
 type PracticeHubClientProps = {
@@ -23,12 +24,36 @@ type PracticeHubClientProps = {
 };
 
 export function PracticeHubClient({
-  questions,
-  yearGroup,
+  questions: initialQuestions,
+  yearGroup: initialYearGroup,
   userStats,
 }: PracticeHubClientProps) {
   const router = useRouter();
   const topic = useStudyTopicSelection();
+  const [questions, setQuestions] = useState(initialQuestions);
+  const [yearGroup, setYearGroup] = useState(initialYearGroup);
+
+  const reloadQuestionPool = useCallback(async () => {
+    const stats = await fetchUserStats();
+    const next = await fetchPracticeQuestions({
+      yearGroup: stats.yearGroup,
+      examBoard: stats.examBoard ?? "AQA",
+    });
+    setQuestions(next);
+    setYearGroup(stats.yearGroup);
+  }, []);
+
+  useEffect(() => {
+    setQuestions(initialQuestions);
+    setYearGroup(initialYearGroup);
+  }, [initialQuestions, initialYearGroup]);
+
+  useEffect(() => {
+    void reloadQuestionPool();
+    const onShell = () => void reloadQuestionPool();
+    window.addEventListener(SHELL_DATA_CHANGED, onShell);
+    return () => window.removeEventListener(SHELL_DATA_CHANGED, onShell);
+  }, [reloadQuestionPool]);
 
   const scrollToQuiz = useCallback(() => {
     document
