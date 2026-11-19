@@ -1,13 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowRight, Snowflake } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, Info, Snowflake } from "lucide-react";
 import {
   ScubaMonsterAvatar,
   StreakFlameMascot,
 } from "@/components/common/SubjectIcon";
 import { yearGroupProfiles } from "@/data/yearGroupProfiles";
+import { buildStreakWeekDays } from "@/lib/streak/streakWeek";
 import type { UserStats } from "@/types";
+
+const MAX_WEEKS_BACK = 11;
 
 type StudyStreakIndicatorProps = {
   stats: Pick<
@@ -19,7 +22,6 @@ type StudyStreakIndicatorProps = {
 
 export function StudyStreakIndicator({
   stats,
-  onQuickPractice,
 }: StudyStreakIndicatorProps) {
   const profile = yearGroupProfiles[stats.yearGroup];
   const targetQuestions = profile?.targetQuestions ?? 20;
@@ -29,6 +31,7 @@ export function StudyStreakIndicator({
   const [availableFreezes, setAvailableFreezes] = useState(2);
   const [streakFrozen, setStreakFrozen] = useState(false);
   const [showFreezeModal, setShowFreezeModal] = useState(false);
+  const [weekOffset, setWeekOffset] = useState(0);
 
   const handleActivateFreeze = () => {
     if (availableFreezes > 0 && !streakFrozen) {
@@ -38,27 +41,23 @@ export function StudyStreakIndicator({
     }
   };
 
-  const weekDays = [
-    { label: "M", completed: true, isToday: false, isFrozen: false },
-    { label: "T", completed: true, isToday: false, isFrozen: false },
-    { label: "W", completed: true, isToday: false, isFrozen: false },
-    {
-      label: "T",
-      completed: isGoalMetToday || streakFrozen,
-      isToday: true,
-      isFrozen: streakFrozen,
-    },
-    { label: "F", completed: false, isToday: false, isFrozen: false },
-    { label: "S", completed: false, isToday: false, isFrozen: false },
-    { label: "S", completed: false, isToday: false, isFrozen: false },
-  ];
+  const weekView = useMemo(
+    () =>
+      buildStreakWeekDays(weekOffset, {
+        dailyStreak: stats.dailyStreak,
+        todayMet: isGoalMetToday,
+        frozenToday: streakFrozen,
+      }),
+    [weekOffset, stats.dailyStreak, isGoalMetToday, streakFrozen],
+  );
 
-  const xpToEarn = questionsLeft * 5;
+  const canGoOlder = weekOffset > -MAX_WEEKS_BACK;
+  const canGoNewer = weekOffset < 0;
 
   return (
     <>
       <div className="relative mb-6">
-        <div className="flex flex-col justify-between gap-6 rounded-2xl border border-[#cdd9ea]/80 bg-white p-5 shadow-sm transition-colors dark:border-[#2e4a73] dark:bg-[#1a2437] sm:p-6 lg:flex-row lg:items-center">
+        <div className="flex flex-col justify-between gap-6 rounded-2xl border border-[#cdd9ea]/80 bg-white p-5 shadow-sm transition-colors dark:border-[#2e4a73] dark:bg-[#1a2437] sm:p-6 lg:flex-row lg:items-stretch">
           <div className="flex items-center gap-5">
             <div className="shrink-0 transition-transform hover:scale-105">
               <ScubaMonsterAvatar sizePx={72} />
@@ -91,42 +90,76 @@ export function StudyStreakIndicator({
             </div>
           </div>
 
-          <div className="flex flex-col items-start gap-6 border-t border-[#e8edf6] pt-4 dark:border-[#2e4a73] sm:flex-row sm:items-center lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
-            <div className="flex items-center gap-3">
-              <div className="shrink-0 transition-transform hover:scale-110">
-                <StreakFlameMascot sizePx={44} />
+          <div className="flex min-w-0 flex-1 flex-col gap-4 border-t border-[#e8edf6] pt-4 dark:border-[#2e4a73] lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex items-center gap-3">
+                <div className="shrink-0 transition-transform hover:scale-110">
+                  <StreakFlameMascot sizePx={44} />
+                </div>
+                <div>
+                  <div className="font-mono text-xl font-black leading-none text-[#ea580c] dark:text-[#fb923c] sm:text-2xl">
+                    {stats.dailyStreak} days
+                  </div>
+                  <div className="mt-0.5 text-xs font-medium text-[#6d94c3] dark:text-[#a0b9d9]">
+                    Current streak
+                  </div>
+                </div>
               </div>
-              <div>
-                <div className="font-mono text-xl font-black leading-none text-[#ea580c] dark:text-[#fb923c] sm:text-2xl">
-                  {stats.dailyStreak} days
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  disabled={!canGoOlder}
+                  onClick={() => setWeekOffset((w) => w - 1)}
+                  aria-label="Previous week"
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-[#6d94c3] transition-colors hover:bg-[#f4f7fb] disabled:cursor-not-allowed disabled:opacity-30 dark:text-[#a0b9d9] dark:hover:bg-[#273853]"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <div className="min-w-[8.5rem] rounded-full border border-[#e8edf6] bg-[#f8fafc] px-3 py-1.5 text-center text-xs font-bold text-[#395e90] dark:border-[#2e4a73] dark:bg-[#141d2e] dark:text-[#cdd9ea]">
+                  {weekView.rangeLabel}
                 </div>
-                <div className="mt-0.5 text-xs font-medium text-[#6d94c3] dark:text-[#a0b9d9]">
-                  Current streak
-                </div>
+                <button
+                  type="button"
+                  disabled={!canGoNewer}
+                  onClick={() => setWeekOffset((w) => w + 1)}
+                  aria-label="Next week"
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-[#6d94c3] transition-colors hover:bg-[#f4f7fb] disabled:cursor-not-allowed disabled:opacity-30 dark:text-[#a0b9d9] dark:hover:bg-[#273853]"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  title="Orange days count toward your streak. Use freezes to protect a miss day. Navigate arrows to see past weeks."
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#e8edf6] text-[#6d94c3] dark:border-[#2e4a73] dark:text-[#a0b9d9]"
+                  aria-label="How streak weeks work"
+                >
+                  <Info className="h-4 w-4" />
+                </button>
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5">
-              {weekDays.map((item, idx) => (
+            <div className="flex flex-wrap items-center justify-center gap-1.5 sm:justify-start">
+              {weekView.days.map((item) => (
                 <div
-                  key={`${item.label}-${idx}`}
-                  title={item.label}
-                  className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-black transition-all ${
+                  key={item.iso}
+                  title={item.iso}
+                  className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-black transition-all ${
                     item.isFrozen
                       ? "bg-sky-500 text-white shadow-sm"
                       : item.completed
                         ? "bg-[#ea580c] text-white shadow-sm ring-2 ring-orange-200 dark:ring-orange-950"
                         : item.isToday
                           ? "animate-pulse border-2 border-dashed border-[#ea580c] bg-orange-50 text-[#ea580c] dark:bg-orange-950/60"
-                          : "bg-[#f4f7fb] text-[#94a3b8] dark:bg-[#273853] dark:text-[#64748b]"
+                          : item.isFuture
+                            ? "bg-[#f4f7fb] text-[#cbd5e1] dark:bg-[#273853] dark:text-[#475569]"
+                            : "bg-[#f4f7fb] text-[#94a3b8] dark:bg-[#273853] dark:text-[#64748b]"
                   }`}
                 >
                   {item.label}
                 </div>
               ))}
             </div>
-
-
           </div>
         </div>
       </div>

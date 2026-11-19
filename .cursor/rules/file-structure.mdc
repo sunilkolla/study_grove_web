@@ -12,7 +12,7 @@ Use this map when adding features. Prefer the existing layer—not a new top-lev
 | Layer | Role | Put here |
 |-------|------|----------|
 | `app/` | Routes (Next.js App Router) | Thin **Server Component** pages: `await connection()`, fetch via `services/`, pass props to `*Client` components. Study routes live under `app/(study)/` and wrap in `AppShell` via `app/(study)/layout.tsx`. |
-| `components/` | UI | Feature folders (`focus/`, `schedule/`, `quiz/`, `topic/`, …). `layout/` = shell (sidebar, dock, header). `*Client.tsx` = `"use client"` interactivity; keep pages thin. |
+| `components/` | UI | Feature folders (`focus/`, `schedule/`, `quiz/`, `topic/`, …). `marketing/` = public landing, pricing, auth UI. `layout/` = shell (sidebar, dock, header). `*Client.tsx` = `"use client"` interactivity; keep pages thin. |
 | `data/` | Static content | Curriculum (`gcseSyllabus.ts`), mocks (`mockQuestions`, `mockTasks`, …), profiles, question banks (`data/questions/year9/`), generated decks (`data/flashcards/`). **No React imports.** Imported by services or components for read-only data. |
 | `services/` | App logic & I/O | Async APIs (`fetchTasks`, `completeFocusSession`, …). **`mockSessionStore.ts`** holds in-memory state until Supabase; mutate only through services. |
 | `types/` | Shared TypeScript | Domain types (`TaskItem`, `UserStats`, `ForestTree`, …). Import as `@/types` (re-exported from root `types.ts`). |
@@ -33,7 +33,7 @@ components/*Client      →  services/* (reads/writes on interaction)
 
 ## Conventions
 
-1. **New route**: add `app/(study)/<feature>/page.tsx` + `components/<feature>/<Feature>Client.tsx`.
+1. **New route**: add `app/(study)/<feature>/page.tsx` + `components/<feature>/<Feature>Client.tsx`. Public marketing lives in `app/(marketing)/`, `app/auth/`, and `app/pricing/` (via marketing group)—no `AppShell`.
 2. **New entity**: type in `types/index.ts`, seed in `data/mock*.ts`, accessors in `services/<feature>Service.ts`, wire store in `mockSessionStore.ts` if persisted.
 3. **Shell-wide behavior** (tasks, focus timer, XP): touch `AppShellClient`, `ContextDock`, and the relevant `lib/*Events.ts` so dock + pages stay in sync.
 4. **Do not** put business rules in `app/` pages or duplicate mocks inside components—call services.
