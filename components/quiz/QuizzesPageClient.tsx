@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { MathsTopicList } from "@/components/quiz/MathsTopicList";
 import { SHELL_DATA_CHANGED } from "@/lib/shellEvents";
 import { fetchPracticeQuestions } from "@/services/questionService";
 import { fetchUserStats } from "@/services/userService";
@@ -17,17 +19,26 @@ type QuizzesPageClientProps = {
   questions: PracticeQuestion[];
   yearGroup: YearGroup;
   examBoard: ExamBoard;
+  initialSubject?: SubjectFilter;
 };
 
 export function QuizzesPageClient({
   questions: initialQuestions,
   yearGroup: initialYearGroup,
   examBoard: initialExamBoard,
+  initialSubject = "ALL",
 }: QuizzesPageClientProps) {
+  const searchParams = useSearchParams();
+  const subjectFromUrl = searchParams.get("subject");
+  const parsedInitial: SubjectFilter =
+    subjectFromUrl && QUIZ_SUBJECT_FILTERS.includes(subjectFromUrl as SubjectFilter)
+      ? (subjectFromUrl as SubjectFilter)
+      : initialSubject;
+
   const [questions, setQuestions] = useState(initialQuestions);
   const [yearGroup, setYearGroup] = useState(initialYearGroup);
   const [examBoard, setExamBoard] = useState(initialExamBoard);
-  const [subjectFilter, setSubjectFilter] = useState<SubjectFilter>("ALL");
+  const [subjectFilter, setSubjectFilter] = useState<SubjectFilter>(parsedInitial);
 
   const reloadPool = useCallback(async () => {
     const stats = await fetchUserStats();
@@ -45,6 +56,10 @@ export function QuizzesPageClient({
     setYearGroup(initialYearGroup);
     setExamBoard(initialExamBoard);
   }, [initialQuestions, initialYearGroup, initialExamBoard]);
+
+  useEffect(() => {
+    setSubjectFilter(parsedInitial);
+  }, [parsedInitial]);
 
   useEffect(() => {
     void reloadPool();
@@ -68,6 +83,9 @@ export function QuizzesPageClient({
     return questions.filter((q) => q.subject === subjectFilter);
   }, [questions, subjectFilter]);
 
+  const showMathsTopics =
+    subjectFilter === "MATHS" && (yearGroup === "Year 9" || yearGroup === "Year 8");
+
   return (
     <div className="space-y-4">
       <header>
@@ -81,14 +99,20 @@ export function QuizzesPageClient({
           {subjectFilter === "ALL"
             ? ` of ${questions.length} questions`
             : ` ${subjectFilterLabel(subjectFilter)} questions`}{" "}
-          · {yearGroup} · {examBoard}. Play from the{" "}
-          <Link
-            href="/dashboard#practice-quiz"
-            className="font-medium text-[#0F5132] underline-offset-2 hover:underline dark:text-[#10B981]"
-          >
-            Practice Hub
-          </Link>
-          .
+          · {yearGroup} · {examBoard}.
+          {!showMathsTopics && (
+            <>
+              {" "}
+              Play from the{" "}
+              <Link
+                href="/dashboard#practice-quiz"
+                className="font-medium text-[#0F5132] underline-offset-2 hover:underline dark:text-[#10B981]"
+              >
+                Practice Hub
+              </Link>
+              .
+            </>
+          )}
         </p>
       </header>
 
@@ -123,7 +147,9 @@ export function QuizzesPageClient({
         })}
       </div>
 
-      {filtered.length === 0 ? (
+      {showMathsTopics ? (
+        <MathsTopicList />
+      ) : filtered.length === 0 ? (
         <p className="rounded-xl border border-dashed border-slate-300 bg-white/80 p-8 text-center text-sm text-slate-500 dark:border-[#2e4a73] dark:bg-[#1a2437]/80 dark:text-[#a0b9d9]">
           No questions in this filter. Try another subject or change year/board in
           profile settings.

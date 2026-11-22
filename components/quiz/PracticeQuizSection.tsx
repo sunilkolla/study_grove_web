@@ -88,6 +88,25 @@ export function PracticeQuizSection({
     setActiveIndex((prev) => (prev + 1) % filteredQuestions.length);
   }, [filteredQuestions.length, resetQuestionState]);
 
+  const handlePrevious = useCallback(() => {
+    resetQuestionState();
+    if (filteredQuestions.length === 0) return;
+    setActiveIndex((prev) =>
+      prev === 0 ? filteredQuestions.length - 1 : prev - 1,
+    );
+  }, [filteredQuestions.length, resetQuestionState]);
+
+  const handleGoToQuestion = useCallback(
+    (index: number) => {
+      resetQuestionState();
+      if (filteredQuestions.length === 0) return;
+      setActiveIndex(
+        Math.max(0, Math.min(index, filteredQuestions.length - 1)),
+      );
+    },
+    [filteredQuestions.length, resetQuestionState],
+  );
+
   const handleSubjectChange = (filter: SubjectFilter) => {
     setSubjectFilter(filter);
     setActiveIndex(0);
@@ -196,6 +215,8 @@ export function PracticeQuizSection({
           onSelectOption={handleSelectOption}
           onSkip={handleNextOrSkip}
           onNext={handleNextOrSkip}
+          onPrevious={handlePrevious}
+          onGoToQuestion={handleGoToQuestion}
         />
       ) : (
         <p className="rounded-xl border border-dashed border-slate-300 bg-white/80 p-8 text-center text-sm text-slate-500 dark:border-[#2e4a73] dark:bg-[#1a2437]/80 dark:text-[#a0b9d9]">

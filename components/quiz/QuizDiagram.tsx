@@ -1,9 +1,15 @@
+import { MathsDiagramByKey } from "./diagrams/year9MathsDiagrams";
+
 type QuizDiagramProps = {
   questionId: string;
+  diagramKey?: string;
 };
 
 /** Optional topic visuals — extend as question bank grows. */
-export function QuizDiagram({ questionId }: QuizDiagramProps) {
+export function QuizDiagram({ questionId, diagramKey }: QuizDiagramProps) {
+  if (diagramKey) {
+    return <MathsDiagramByKey diagramKey={diagramKey} />;
+  }
   if (questionId === "q-y10-1") {
     return <CellTransportDiagram />;
   }

@@ -38,6 +38,8 @@ export interface PracticeQuestion {
   yearGroup: YearGroup;
   difficulty: QuestionDifficulty;
   xpReward: number;
+  /** Renders an SVG in the quiz UI when set (e.g. Year 9 maths). */
+  diagramKey?: string;
 }
 
 // —— Tasks / revision schedule ——

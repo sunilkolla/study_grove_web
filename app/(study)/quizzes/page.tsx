@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { connection } from "next/server";
 import { QuizzesPageClient } from "@/components/quiz/QuizzesPageClient";
 import { fetchPracticeQuestions } from "@/services/questionService";
@@ -12,10 +13,12 @@ export default async function QuizzesPage() {
   });
 
   return (
-    <QuizzesPageClient
-      questions={questions}
-      yearGroup={stats.yearGroup}
-      examBoard={stats.examBoard}
-    />
+    <Suspense fallback={<p className="text-sm text-slate-500">Loading…</p>}>
+      <QuizzesPageClient
+        questions={questions}
+        yearGroup={stats.yearGroup}
+        examBoard={stats.examBoard}
+      />
+    </Suspense>
   );
 }

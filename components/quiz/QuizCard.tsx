@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ArrowLeft,
   ArrowRight,
   CheckCircle2,
   ChevronRight,
@@ -32,6 +33,8 @@ export type QuizCardProps = {
   onSelectOption: (index: number) => void;
   onSkip: () => void;
   onNext: () => void;
+  onPrevious?: () => void;
+  onGoToQuestion?: (index: number) => void;
   onBrowseAll?: () => void;
 };
 
@@ -47,23 +50,22 @@ export function QuizCard({
   onSelectOption,
   onSkip,
   onNext,
+  onPrevious,
+  onGoToQuestion,
   onBrowseAll,
   topicMasteryPercent,
 }: QuizCardProps) {
-  const showDiagram = ["q-y10-1", "q-y9-4", "q-y10-4"].includes(question.id);
+  const showDiagram =
+    Boolean(question.diagramKey) ||
+    ["q-y10-1", "q-y9-4", "q-y10-4"].includes(question.id);
   const masteryPercent = topicMasteryPercent;
   const masteryStatus =
     masteryPercent !== undefined
       ? masteryStatusFromPercent(masteryPercent)
       : undefined;
-  const progressSegments = 5;
-  const filledSegments = Math.min(
-    progressSegments,
-    Math.max(
-      1,
-      Math.ceil(((questionIndex + 1) / questionTotal) * progressSegments),
-    ),
-  );
+  const progressSegments = questionTotal;
+  const canGoPrevious = questionIndex > 0;
+  const canGoNext = questionIndex < questionTotal - 1;
 
   return (
     <article className="relative space-y-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-colors dark:border-[#2e4a73] dark:bg-[#273853] sm:p-6">
@@ -122,23 +124,55 @@ export function QuizCard({
         </div>
       </div>
 
-      <div className="flex gap-1.5" aria-hidden>
-        {Array.from({ length: progressSegments }).map((_, i) => (
-          <span
-            key={i}
-            className={`h-1.5 flex-1 rounded-full ${
-              i < filledSegments
-                ? "bg-[#10B981]"
-                : "bg-slate-200 dark:bg-[#2e4a73]"
-            }`}
-          />
-        ))}
+      <div
+        className="flex gap-0.5 overflow-x-auto pb-0.5"
+        role="tablist"
+        aria-label="Question progress"
+      >
+        {Array.from({ length: progressSegments }).map((_, i) => {
+          const isCurrent = i === questionIndex;
+          const isPast = i < questionIndex;
+          const clickable = Boolean(onGoToQuestion);
+          const base =
+            "h-2 min-w-[8px] flex-1 rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-emerald-500";
+          const color = isCurrent
+            ? "bg-[#10B981] ring-1 ring-emerald-400"
+            : isPast
+              ? "bg-emerald-300 dark:bg-emerald-700"
+              : "bg-slate-200 dark:bg-[#2e4a73]";
+
+          if (clickable) {
+            return (
+              <button
+                key={i}
+                type="button"
+                role="tab"
+                aria-selected={isCurrent}
+                aria-label={`Question ${i + 1} of ${questionTotal}`}
+                onClick={() => onGoToQuestion?.(i)}
+                className={`${base} ${color} ${clickable ? "cursor-pointer hover:opacity-90" : ""}`}
+              />
+            );
+          }
+
+          return (
+            <span
+              key={i}
+              role="tab"
+              aria-selected={isCurrent}
+              className={`${base} ${color}`}
+            />
+          );
+        })}
       </div>
 
       <div>
         {showDiagram && (
           <div className="mb-4">
-            <QuizDiagram questionId={question.id} />
+            <QuizDiagram
+              questionId={question.id}
+              diagramKey={question.diagramKey}
+            />
           </div>
         )}
 
@@ -230,8 +264,29 @@ export function QuizCard({
         <span className="hidden text-[11px] text-slate-400 sm:inline dark:text-[#a0b9d9]">
           Tip: Press 1–4 or A–D on your keyboard
         </span>
-        <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
-          {showFeedback ? (
+        <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
+          {onPrevious && (
+            <button
+              type="button"
+              onClick={onPrevious}
+              disabled={!canGoPrevious}
+              className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 dark:border-[#2e4a73] dark:bg-[#1a2437] dark:text-[#cdd9ea] sm:text-sm"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden />
+              Previous
+            </button>
+          )}
+          {onPrevious !== undefined ? (
+            <button
+              type="button"
+              onClick={onNext}
+              disabled={!canGoNext}
+              className="flex items-center justify-center gap-2 rounded-xl bg-[#10B981] px-5 py-3 text-xs font-bold text-white shadow-md transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
+            >
+              Next Question
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          ) : showFeedback ? (
             <button
               type="button"
               onClick={onNext}

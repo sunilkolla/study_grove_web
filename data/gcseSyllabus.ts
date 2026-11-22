@@ -254,18 +254,45 @@ const chemistryMainTopics = buildCompactSubject("CHEMISTRY", "CHEMISTRY", [
 const mathsMainTopics = buildCompactSubject("MATHS", "MATHS", [
   {
     index: 1,
-    title: "Number & Algebra",
+    title: "Geometrical Reasoning",
     items: [
-      ["2.1", "Percentages & Ratio", "Multi-step ratio and percentage problems.", 82],
-      ["2.2", "Algebraic Manipulation", "Expanding, factorising, and solving.", 74],
+      ["1.1", "Angles in Parallel Lines", "Alternate, corresponding, and co-interior angles.", 72],
+      ["1.2", "Angles in Polygons", "Interior and exterior angles in regular and irregular polygons.", 65],
+      ["1.3", "Pythagoras' Theorem", "Finding sides in right-angled triangles.", 78],
+      ["1.4", "More Pythagoras' Theorem", "Applied Pythagoras and hypotenuse problems.", 70],
     ],
   },
   {
     index: 2,
-    title: "Geometry & Measures",
+    title: "Simultaneous Equations",
     items: [
-      ["3.1", "Angles & Constructions", "Circle theorems and loci.", 59],
-      ["3.2", "Trigonometry", "SOHCAHTOA and exact values.", 68],
+      ["2.1", "Positives / Negatives", "Setting up simultaneous equations from contexts.", 68],
+      ["2.2", "Adjusting One / Both Equations", "Elimination and substitution.", 62],
+      ["2.3", "Wordy Problems", "Real-life situations leading to pairs of equations.", 55],
+      ["2.4", "Graphical Method", "Solving by intersecting straight-line graphs.", 58],
+    ],
+  },
+  {
+    index: 3,
+    title: "Statistics",
+    items: [
+      ["3.1", "Types of Data / Averages", "Discrete, continuous data; mean, median, mode.", 75],
+      ["3.2", "Quartiles / Interquartile Range", "Q1, Q3, and IQR.", 60],
+      ["3.3", "Cumulative Frequency", "Reading values from cumulative frequency curves.", 58],
+      ["3.4", "Box Plots", "Constructing and interpreting box plots.", 63],
+      ["3.5", "Mean from a Grouped Frequency Table", "Midpoints and estimated mean.", 52],
+      ["3.6", "Comparing Data", "Comparing distributions using averages and spread.", 56],
+    ],
+  },
+  {
+    index: 4,
+    title: "Proportional Reasoning",
+    items: [
+      ["4.1", "Algebraic Fractions", "Simplify and calculate with algebraic fractions.", 48],
+      ["4.2", "Percentage Increase / Decrease", "Multipliers and percentage change.", 80],
+      ["4.3", "Reverse Percentages", "Finding original amounts after a change.", 72],
+      ["4.4", "Problem Solving", "Multi-step ratio and proportion problems.", 65],
+      ["4.5", "Standard Form", "Operations with numbers in standard form.", 55],
     ],
   },
 ]);
@@ -352,7 +379,7 @@ export const DEFAULT_CURRENT_BY_SUBJECT: Record<SyllabusSubjectCode, string> = {
   PHYSICS: "PHYSICS-1.5",
   BIOLOGY: "BIOLOGY-4.1.1",
   CHEMISTRY: "CHEMISTRY-1.1",
-  MATHS: "MATHS-2.1",
+  MATHS: "MATHS-1.1",
   COMPUTER_SCIENCE: "COMPUTER_SCIENCE-2.1",
   ENGLISH: "ENGLISH_LANGUAGE-1.1",
   GEOGRAPHY: "GEOGRAPHY-1.1",
