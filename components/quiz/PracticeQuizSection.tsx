@@ -37,6 +37,9 @@ export function PracticeQuizSection({
   const [showFeedback, setShowFeedback] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [floatingXp, setFloatingXp] = useState<number | null>(null);
+  const [questionResults, setQuestionResults] = useState<Array<boolean | null>>(
+    [],
+  );
 
   const filteredQuestions = useMemo(
     () =>
@@ -61,6 +64,19 @@ export function PracticeQuizSection({
 
   const activeQuestion = filteredQuestions[activeIndex] ?? filteredQuestions[0];
 
+  const filteredQuestionsIdentity = useMemo(
+    () => filteredQuestions.map((q) => q.id).join("\0"),
+    [filteredQuestions],
+  );
+
+  useEffect(() => {
+    setQuestionResults(filteredQuestions.map(() => null));
+    setActiveIndex(0);
+    setSelectedOption(null);
+    setShowFeedback(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- ignore referential churn when parent re-fetches
+  }, [filteredQuestionsIdentity]);
+
   const resetQuestionState = useCallback(() => {
     setSelectedOption(null);
     setShowFeedback(false);
@@ -73,13 +89,21 @@ export function PracticeQuizSection({
       setShowFeedback(true);
       const isCorrect = idx === activeQuestion.correctAnswerIndex;
       const xp = isCorrect ? activeQuestion.xpReward : 5;
+      setQuestionResults((prev) => {
+        const next =
+          prev.length === filteredQuestions.length
+            ? [...prev]
+            : filteredQuestions.map(() => null);
+        next[activeIndex] = isCorrect;
+        return next;
+      });
       if (isCorrect) {
         setFloatingXp(xp);
         window.setTimeout(() => setFloatingXp(null), 1400);
       }
       onQuestionAnswered(isCorrect, xp);
     },
-    [activeQuestion, onQuestionAnswered, showFeedback],
+    [activeIndex, activeQuestion, filteredQuestions, onQuestionAnswered, showFeedback],
   );
 
   const handleNextOrSkip = useCallback(() => {
@@ -217,6 +241,7 @@ export function PracticeQuizSection({
           onNext={handleNextOrSkip}
           onPrevious={handlePrevious}
           onGoToQuestion={handleGoToQuestion}
+          questionResults={questionResults}
         />
       ) : (
         <p className="rounded-xl border border-dashed border-slate-300 bg-white/80 p-8 text-center text-sm text-slate-500 dark:border-[#2e4a73] dark:bg-[#1a2437]/80 dark:text-[#a0b9d9]">

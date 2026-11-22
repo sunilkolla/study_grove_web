@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { SubjectIcon } from "@/components/common/SubjectIcon";
 import type { PracticeQuestion } from "@/types";
+import { FormattedQuestionText } from "@/lib/quiz/formatQuestionText";
 import { QuizDiagram } from "./QuizDiagram";
 import {
   masteryDotClasses,
@@ -36,6 +37,8 @@ export type QuizCardProps = {
   onPrevious?: () => void;
   onGoToQuestion?: (index: number) => void;
   onBrowseAll?: () => void;
+  /** Per-question: true = correct, false = wrong, null = not answered yet */
+  questionResults?: Array<boolean | null>;
 };
 
 export function QuizCard({
@@ -54,9 +57,11 @@ export function QuizCard({
   onGoToQuestion,
   onBrowseAll,
   topicMasteryPercent,
+  questionResults,
 }: QuizCardProps) {
   const showDiagram =
     Boolean(question.diagramKey) ||
+    Boolean(question.diagramParams) ||
     ["q-y10-1", "q-y9-4", "q-y10-4"].includes(question.id);
   const masteryPercent = topicMasteryPercent;
   const masteryStatus =
@@ -66,6 +71,23 @@ export function QuizCard({
   const progressSegments = questionTotal;
   const canGoPrevious = questionIndex > 0;
   const canGoNext = questionIndex < questionTotal - 1;
+
+  const segmentColor = (i: number): string => {
+    let outcome: boolean | null = questionResults?.[i] ?? null;
+    if (i === questionIndex && showFeedback && selectedOption !== null) {
+      outcome = selectedOption === question.correctAnswerIndex;
+    }
+    if (outcome === true) {
+      return "bg-emerald-500 text-white dark:bg-emerald-600";
+    }
+    if (outcome === false) {
+      return "bg-rose-500 text-white dark:bg-rose-600";
+    }
+    if (i === questionIndex) {
+      return "bg-[#10B981] text-white ring-1 ring-emerald-400";
+    }
+    return "bg-slate-200 text-slate-600 dark:bg-[#2e4a73] dark:text-slate-300";
+  };
 
   return (
     <article className="relative space-y-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-colors dark:border-[#2e4a73] dark:bg-[#273853] sm:p-6">
@@ -131,15 +153,10 @@ export function QuizCard({
       >
         {Array.from({ length: progressSegments }).map((_, i) => {
           const isCurrent = i === questionIndex;
-          const isPast = i < questionIndex;
           const clickable = Boolean(onGoToQuestion);
           const base =
-            "h-2 min-w-[8px] flex-1 rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-emerald-500";
-          const color = isCurrent
-            ? "bg-[#10B981] ring-1 ring-emerald-400"
-            : isPast
-              ? "bg-emerald-300 dark:bg-emerald-700"
-              : "bg-slate-200 dark:bg-[#2e4a73]";
+            "flex h-8 min-w-[8px] flex-1 items-center justify-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-emerald-500 text-xs font-medium";
+          const color = segmentColor(i);
 
           if (clickable) {
             return (
@@ -150,8 +167,10 @@ export function QuizCard({
                 aria-selected={isCurrent}
                 aria-label={`Question ${i + 1} of ${questionTotal}`}
                 onClick={() => onGoToQuestion?.(i)}
-                className={`${base} ${color} ${clickable ? "cursor-pointer hover:opacity-90" : ""}`}
-              />
+                className={`${base} ${color} cursor-pointer hover:opacity-90`}
+              >
+                {i + 1}
+              </button>
             );
           }
 
@@ -172,13 +191,14 @@ export function QuizCard({
             <QuizDiagram
               questionId={question.id}
               diagramKey={question.diagramKey}
+              diagramParams={question.diagramParams}
             />
           </div>
         )}
 
-        <h2 className="text-base font-bold leading-snug text-slate-900 dark:text-white sm:text-lg">
-          {question.questionText}
-        </h2>
+        <div className="max-w-prose text-base text-slate-900 dark:text-[#f4f7fb] sm:text-lg">
+          <FormattedQuestionText text={question.questionText} />
+        </div>
       </div>
 
       <div

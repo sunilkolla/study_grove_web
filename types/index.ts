@@ -40,7 +40,20 @@ export interface PracticeQuestion {
   xpReward: number;
   /** Renders an SVG in the quiz UI when set (e.g. Year 9 maths). */
   diagramKey?: string;
+  diagramParams?: PracticeQuestionDiagramParams;
 }
+
+export type PracticeQuestionBarChartParams = {
+  kind: "barChart";
+  title: string;
+  yLabel: string;
+  xLabel: string;
+  yMax: number;
+  yStep: number;
+  bars: { label: string; value: number }[];
+};
+
+export type PracticeQuestionDiagramParams = PracticeQuestionBarChartParams;
 
 // —— Tasks / revision schedule ——
 export type RevisionTaskKind =

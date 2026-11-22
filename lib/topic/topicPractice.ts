@@ -8,7 +8,7 @@ export type TopicPracticeScope =
   | { mode: "all" };
 
 /** e.g. BIO-AQA-4.1.1 ↔ subtopic id BIOLOGY-4.1.1, code 4.1.1 */
-function topicCodeMatchesSubtopic(
+export function topicCodeMatchesSubtopic(
   questionTopicCode: string,
   subtopic: SyllabusSubtopic,
 ): boolean {

@@ -1,12 +1,24 @@
+import {
+  ExamBarChartFigure,
+} from "./diagrams/examChart/ExamChartPrimitives";
 import { MathsDiagramByKey } from "./diagrams/year9MathsDiagrams";
+import type { PracticeQuestionDiagramParams } from "@/types";
 
 type QuizDiagramProps = {
   questionId: string;
   diagramKey?: string;
+  diagramParams?: PracticeQuestionDiagramParams;
 };
 
 /** Optional topic visuals — extend as question bank grows. */
-export function QuizDiagram({ questionId, diagramKey }: QuizDiagramProps) {
+export function QuizDiagram({
+  questionId,
+  diagramKey,
+  diagramParams,
+}: QuizDiagramProps) {
+  if (diagramParams?.kind === "barChart") {
+    return <ExamBarChartFigure {...diagramParams} />;
+  }
   if (diagramKey) {
     return <MathsDiagramByKey diagramKey={diagramKey} />;
   }

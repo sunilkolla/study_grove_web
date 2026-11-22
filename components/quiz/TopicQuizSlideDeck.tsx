@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { notifyShellDataChanged } from "@/lib/shellEvents";
 import { recordQuestionAnswered } from "@/services/userService";
@@ -26,14 +26,32 @@ export function TopicQuizSlideDeck({
   const [showFeedback, setShowFeedback] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [floatingXp, setFloatingXp] = useState<number | null>(null);
+  const [questionResults, setQuestionResults] = useState<Array<boolean | null>>(
+    () => questions.map(() => null),
+  );
 
   const activeQuestion = questions[activeIndex] ?? questions[0];
   const questionTotal = questions.length;
+
+  /** Stable identity so router.refresh() does not wipe in-progress answers */
+  const questionsIdentity = useMemo(
+    () => questions.map((q) => q.id).join("\0"),
+    [questions],
+  );
 
   const resetQuestionState = useCallback(() => {
     setSelectedOption(null);
     setShowFeedback(false);
   }, []);
+
+  useEffect(() => {
+    setQuestionResults(questions.map(() => null));
+    setActiveIndex(0);
+    setSelectedOption(null);
+    setShowFeedback(false);
+    // questionsIdentity gates reset; `questions` is read when the set actually changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- ignore referential churn from router.refresh()
+  }, [questionsIdentity]);
 
   const handleQuestionAnswered = useCallback(
     async (isCorrect: boolean, xp: number) => {
@@ -51,13 +69,18 @@ export function TopicQuizSlideDeck({
       setShowFeedback(true);
       const isCorrect = idx === activeQuestion.correctAnswerIndex;
       const xp = isCorrect ? activeQuestion.xpReward : 5;
+      setQuestionResults((prev) => {
+        const next = [...prev];
+        next[activeIndex] = isCorrect;
+        return next;
+      });
       if (isCorrect) {
         setFloatingXp(xp);
         window.setTimeout(() => setFloatingXp(null), 1400);
       }
       void handleQuestionAnswered(isCorrect, xp);
     },
-    [activeQuestion, handleQuestionAnswered, showFeedback],
+    [activeIndex, activeQuestion, handleQuestionAnswered, showFeedback],
   );
 
   const handleNextOrSkip = useCallback(() => {
@@ -147,6 +170,7 @@ export function TopicQuizSlideDeck({
           onNext={handleNextOrSkip}
           onPrevious={handlePrevious}
           onGoToQuestion={handleGoToQuestion}
+          questionResults={questionResults}
         />
       )}
 

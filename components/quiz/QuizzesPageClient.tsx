@@ -1,13 +1,16 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { MathsTopicList } from "@/components/quiz/MathsTopicList";
+import { QuizTopicCardGrid } from "@/components/quiz/QuizTopicCardGrid";
 import { SHELL_DATA_CHANGED } from "@/lib/shellEvents";
+import {
+  buildTopicCardsForAll,
+  buildTopicCardsForSubject,
+} from "@/lib/quiz/quizTopicCards";
 import { fetchPracticeQuestions } from "@/services/questionService";
 import { fetchUserStats } from "@/services/userService";
-import type { ExamBoard, PracticeQuestion, YearGroup } from "@/types";
+import type { ExamBoard, PracticeQuestion, SubjectCode, YearGroup } from "@/types";
 import {
   QUIZ_SUBJECT_FILTERS,
   subjectFilterLabel,
@@ -78,13 +81,21 @@ export function QuizzesPageClient({
     });
   }, [questions]);
 
-  const filtered = useMemo(() => {
-    if (subjectFilter === "ALL") return questions;
-    return questions.filter((q) => q.subject === subjectFilter);
+  const filteredCount = useMemo(() => {
+    if (subjectFilter === "ALL") return questions.length;
+    return subjectQuestionCount(questions, subjectFilter);
   }, [questions, subjectFilter]);
 
-  const showMathsTopics =
-    subjectFilter === "MATHS" && (yearGroup === "Year 9" || yearGroup === "Year 8");
+  const topicCards = useMemo(() => {
+    if (subjectFilter === "ALL") {
+      return buildTopicCardsForAll(questions, yearGroup);
+    }
+    return buildTopicCardsForSubject(
+      subjectFilter as SubjectCode,
+      questions,
+      yearGroup,
+    );
+  }, [questions, subjectFilter, yearGroup]);
 
   return (
     <div className="space-y-4">
@@ -94,25 +105,12 @@ export function QuizzesPageClient({
         </h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-[#a0b9d9]">
           <span className="font-semibold text-slate-700 dark:text-[#cdd9ea]">
-            {filtered.length}
+            {filteredCount}
           </span>
           {subjectFilter === "ALL"
             ? ` of ${questions.length} questions`
             : ` ${subjectFilterLabel(subjectFilter)} questions`}{" "}
-          · {yearGroup} · {examBoard}.
-          {!showMathsTopics && (
-            <>
-              {" "}
-              Play from the{" "}
-              <Link
-                href="/dashboard#practice-quiz"
-                className="font-medium text-[#0F5132] underline-offset-2 hover:underline dark:text-[#10B981]"
-              >
-                Practice Hub
-              </Link>
-              .
-            </>
-          )}
+          · {yearGroup} · {examBoard}. Pick a topic to practise.
         </p>
       </header>
 
@@ -147,36 +145,10 @@ export function QuizzesPageClient({
         })}
       </div>
 
-      {showMathsTopics ? (
-        <MathsTopicList />
-      ) : filtered.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-slate-300 bg-white/80 p-8 text-center text-sm text-slate-500 dark:border-[#2e4a73] dark:bg-[#1a2437]/80 dark:text-[#a0b9d9]">
-          No questions in this filter. Try another subject or change year/board in
-          profile settings.
-        </p>
-      ) : (
-        <ul className="divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white dark:divide-[#2e4a73] dark:border-[#2e4a73] dark:bg-[#1a2437]">
-          {filtered.map((q) => (
-            <li key={q.id} className="p-4 text-sm">
-              <p className="text-xs font-semibold text-[#10B981]">
-                {q.subjectName} · {q.yearGroup} · {q.examBoard}
-              </p>
-              <p className="mt-1 font-medium text-slate-800 dark:text-[#f4f7fb]">
-                {q.questionText}
-              </p>
-              <p className="mt-0.5 text-xs text-slate-500 dark:text-[#a0b9d9]">
-                {q.topicName} · {q.topicCode} · +{q.xpReward} XP
-              </p>
-              <Link
-                href="/dashboard#practice-quiz"
-                className="mt-2 inline-block text-xs font-bold text-[#0F5132] hover:underline dark:text-emerald-400"
-              >
-                Practice on hub →
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+      <QuizTopicCardGrid
+        cards={topicCards}
+        showSubject={subjectFilter === "ALL"}
+      />
     </div>
   );
 }

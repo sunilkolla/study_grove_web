@@ -1,7 +1,14 @@
+import {
+  DEFAULT_HOMEWORK_BAR_CHART,
+  ExamBarChartFigure,
+  ExamGraphPaper,
+} from "./examChart/ExamChartPrimitives";
+
 /** Year 9 maths quiz diagrams — keyed by `diagramKey` on PracticeQuestion. */
 
 const FIGURE =
-  "mx-auto max-w-md rounded-xl border border-sky-200/80 bg-sky-50/50 p-4 dark:border-sky-800/50 dark:bg-sky-950/30";
+  "mx-auto max-w-2xl rounded-lg border border-slate-300 bg-white p-4 shadow-sm dark:border-slate-600 dark:bg-slate-900";
+const INK = "#18181b";
 
 export function MathsDiagramByKey({ diagramKey }: { diagramKey: string }) {
   switch (diagramKey) {
@@ -28,7 +35,7 @@ export function MathsDiagramByKey({ diagramKey }: { diagramKey: string }) {
     case "stat.cf_read":
       return <CumulativeFrequencyDiagram readAt55 />;
     case "stat.bar_compare":
-      return <HomeworkBarChart />;
+      return <ExamBarChartFigure {...DEFAULT_HOMEWORK_BAR_CHART} />;
     case "stat.histogram":
       return <SimpleHistogram />;
     case "stat.stem":
@@ -47,26 +54,26 @@ function ParallelLinesDiagram() {
     <figure className={FIGURE} aria-label="Parallel lines and transversal">
       <svg viewBox="0 0 300 160" className="h-auto w-full" role="img">
         <title>Parallel lines L and M with transversal</title>
-        <line x1="20" y1="50" x2="280" y2="35" stroke="#334155" strokeWidth="2" />
-        <line x1="20" y1="110" x2="280" y2="95" stroke="#334155" strokeWidth="2" />
-        <line x1="120" y1="10" x2="80" y2="150" stroke="#0ea5e9" strokeWidth="2" />
-        <text x="245" y="32" className="fill-slate-700 text-[12px] font-bold">
+        <line x1="20" y1="50" x2="280" y2="35" stroke={INK} strokeWidth="1.5" />
+        <line x1="20" y1="110" x2="280" y2="95" stroke={INK} strokeWidth="1.5" />
+        <line x1="120" y1="10" x2="80" y2="150" stroke={INK} strokeWidth="1.5" />
+        <text x="245" y="32" className="fill-zinc-800 text-[12px] font-bold dark:fill-zinc-200">
           L
         </text>
-        <text x="245" y="92" className="fill-slate-700 text-[12px] font-bold">
+        <text x="245" y="92" className="fill-zinc-800 text-[12px] font-bold dark:fill-zinc-200">
           M
         </text>
-        <text x="95" y="78" className="fill-amber-700 text-[13px] font-bold">
+        <text x="95" y="78" className="fill-zinc-900 text-[13px] font-semibold dark:fill-zinc-100">
           x
         </text>
-        <text x="130" y="48" className="fill-emerald-700 text-[13px] font-bold">
+        <text x="130" y="48" className="fill-zinc-900 text-[13px] font-semibold dark:fill-zinc-100">
           48°
         </text>
         <path
           d="M 125 45 A 22 22 0 0 1 138 62"
           fill="none"
-          stroke="#10B981"
-          strokeWidth="1.5"
+          stroke={INK}
+          strokeWidth="1.2"
         />
       </svg>
       <figcaption className="mt-2 text-center text-[10px] text-slate-600 dark:text-slate-300">
@@ -84,11 +91,12 @@ function RegularPentagonDiagram() {
         <title>Regular pentagon</title>
         <polygon
           points={pts}
-          fill="#e0f2fe"
-          stroke="#0284c7"
-          strokeWidth="2"
+          fill="#f4f4f5"
+          stroke={INK}
+          strokeWidth="1.5"
+          className="dark:fill-zinc-800"
         />
-        <text x="138" y="105" className="fill-sky-900 text-[12px] font-semibold">
+        <text x="138" y="105" className="fill-zinc-900 text-[12px] font-semibold dark:fill-zinc-100">
           ?
         </text>
       </svg>
@@ -104,8 +112,8 @@ function RegularHexagonDiagram() {
   return (
     <figure className={FIGURE} aria-label="Regular hexagon">
       <svg viewBox="0 0 300 200" className="h-auto w-full" role="img">
-        <polygon points={pts} fill="#e0f2fe" stroke="#0284c7" strokeWidth="2" />
-        <text x="135" y="110" className="fill-sky-900 text-[12px] font-semibold">
+        <polygon points={pts} fill="#f4f4f5" stroke={INK} strokeWidth="1.5" className="dark:fill-zinc-800" />
+        <text x="135" y="110" className="fill-zinc-900 text-[12px] font-semibold dark:fill-zinc-100">
           n = 6
         </text>
       </svg>
@@ -130,18 +138,19 @@ function PythagorasTriangleDiagram({
         <title>Right-angled triangle</title>
         <path
           d="M 40 130 L 200 130 L 200 40 Z"
-          fill="#f0fdf4"
-          stroke="#059669"
-          strokeWidth="2"
+          fill="#fafafa"
+          stroke={INK}
+          strokeWidth="1.5"
+          className="dark:fill-zinc-800"
         />
-        <rect x="188" y="118" width="12" height="12" fill="none" stroke="#059669" />
-        <text x="108" y="148" className="fill-slate-800 text-[11px] font-semibold">
+        <rect x="188" y="118" width="12" height="12" fill="none" stroke={INK} />
+        <text x="108" y="148" className="fill-zinc-800 text-[11px] font-semibold dark:fill-zinc-200">
           {labels.bottom}
         </text>
-        <text x="205" y="88" className="fill-slate-800 text-[11px] font-semibold">
+        <text x="205" y="88" className="fill-zinc-800 text-[11px] font-semibold dark:fill-zinc-200">
           {labels.right}
         </text>
-        <text x="55" y="75" className="fill-emerald-800 text-[11px] font-bold">
+        <text x="55" y="75" className="fill-zinc-900 text-[11px] font-semibold dark:fill-zinc-100">
           {labels.hyp}
         </text>
       </svg>
@@ -153,15 +162,15 @@ function RectangleDiagonalDiagram() {
   return (
     <figure className={FIGURE} aria-label="Rectangle 24 by 10">
       <svg viewBox="0 0 280 120" className="h-auto w-full" role="img">
-        <rect x="50" y="25" width="180" height="75" fill="#fef3c7" stroke="#d97706" strokeWidth="2" />
-        <line x1="50" y1="100" x2="230" y2="25" stroke="#b45309" strokeWidth="2" strokeDasharray="4 3" />
-        <text x="115" y="115" className="fill-amber-900 text-[11px] font-semibold">
+        <rect x="50" y="25" width="180" height="75" fill="#f4f4f5" stroke={INK} strokeWidth="1.5" className="dark:fill-zinc-800" />
+        <line x1="50" y1="100" x2="230" y2="25" stroke={INK} strokeWidth="1.2" strokeDasharray="4 3" />
+        <text x="115" y="115" className="fill-zinc-800 text-[11px] font-semibold dark:fill-zinc-200">
           24 cm
         </text>
-        <text x="235" y="65" className="fill-amber-900 text-[11px] font-semibold">
+        <text x="235" y="65" className="fill-zinc-800 text-[11px] font-semibold dark:fill-zinc-200">
           10 cm
         </text>
-        <text x="130" y="55" className="fill-amber-800 text-[11px] font-bold">
+        <text x="130" y="55" className="fill-zinc-900 text-[11px] font-semibold dark:fill-zinc-100">
           d
         </text>
       </svg>
@@ -173,15 +182,15 @@ function IsoscelesHeightDiagram() {
   return (
     <figure className={FIGURE} aria-label="Isosceles triangle base 10 sides 13">
       <svg viewBox="0 0 280 150" className="h-auto w-full" role="img">
-        <path d="M 140 25 L 220 125 L 60 125 Z" fill="#ede9fe" stroke="#7c3aed" strokeWidth="2" />
-        <line x1="140" y1="25" x2="140" y2="125" stroke="#7c3aed" strokeWidth="1.5" strokeDasharray="4 3" />
-        <text x="118" y="135" className="fill-violet-900 text-[11px] font-semibold">
+        <path d="M 140 25 L 220 125 L 60 125 Z" fill="#fafafa" stroke={INK} strokeWidth="1.5" className="dark:fill-zinc-800" />
+        <line x1="140" y1="25" x2="140" y2="125" stroke={INK} strokeWidth="1.2" strokeDasharray="4 3" />
+        <text x="118" y="135" className="fill-zinc-800 text-[11px] font-semibold dark:fill-zinc-200">
           10 cm
         </text>
-        <text x="175" y="70" className="fill-violet-900 text-[11px] font-semibold">
+        <text x="175" y="70" className="fill-zinc-800 text-[11px] font-semibold dark:fill-zinc-200">
           13 cm
         </text>
-        <text x="145" y="78" className="fill-violet-800 text-[11px] font-bold">
+        <text x="145" y="78" className="fill-zinc-900 text-[11px] font-semibold dark:fill-zinc-100">
           h
         </text>
       </svg>
@@ -312,42 +321,43 @@ function CumulativeFrequencyDiagram({
   );
 }
 
-function HomeworkBarChart() {
-  return (
-    <figure className={FIGURE} aria-label="Homework hours bar chart">
-      <svg viewBox="0 0 240 140" className="h-auto w-full" role="img">
-        <line x1="40" y1="110" x2="40" y2="30" stroke="#64748b" />
-        <line x1="40" y1="110" x2="200" y2="110" stroke="#64748b" />
-        <rect x="70" y="70" width="40" height="40" fill="#93c5fd" stroke="#2563eb" />
-        <rect x="140" y="45" width="40" height="65" fill="#34d399" stroke="#059669" />
-        <text x="72" y="125" className="fill-slate-600 text-[10px]">
-          Y8
-        </text>
-        <text x="142" y="125" className="fill-slate-600 text-[10px]">
-          Y9
-        </text>
-        <text x="8" y="115" className="fill-slate-600 text-[9px]">
-          hrs
-        </text>
-      </svg>
-    </figure>
-  );
-}
-
 function SimpleHistogram() {
+  const heights = [3, 5, 8, 6];
+  const plotX = 40;
+  const plotY = 20;
+  const plotW = 200;
+  const plotH = 90;
   return (
     <figure className={FIGURE} aria-label="Histogram">
-      <svg viewBox="0 0 260 120" className="h-auto w-full" role="img">
-        <line x1="30" y1="100" x2="240" y2="100" stroke="#64748b" />
-        {[0, 1, 2, 3].map((i) => (
+      <svg viewBox="0 0 280 150" className="h-auto w-full" role="img">
+        <ExamGraphPaper
+          x={plotX}
+          y={plotY}
+          width={plotW}
+          height={plotH}
+          xUnits={10}
+          yUnits={8}
+        />
+        <line x1={plotX} y1={plotY} x2={plotX} y2={plotY + plotH} stroke={INK} strokeWidth="1.2" />
+        <line
+          x1={plotX}
+          y1={plotY + plotH}
+          x2={plotX + plotW}
+          y2={plotY + plotH}
+          stroke={INK}
+          strokeWidth="1.2"
+        />
+        {heights.map((h, i) => (
           <rect
             key={i}
-            x={50 + i * 45}
-            y={100 - (i + 1) * 15}
-            width={35}
-            height={(i + 1) * 15}
-            fill="#7dd3fc"
-            stroke="#0284c7"
+            x={plotX + 20 + i * 45}
+            y={plotY + plotH - h * 10}
+            width={32}
+            height={h * 10}
+            fill="#e4e4e7"
+            stroke={INK}
+            strokeWidth="1"
+            className="dark:fill-zinc-700"
           />
         ))}
       </svg>
