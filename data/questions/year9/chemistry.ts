@@ -8,14 +8,22 @@ export const year9ChemistryQuestions: PracticeQuestion[] = [
     subjectName: "Chemistry",
     topicCode: topicCode("CHE", "1.1"),
     topicName: "Atoms & Elements",
-    questionText:
-      "An atom has 6 protons. What element is it?",
+    subskillId: "CHE.1.1.atomic_number",
+    status: "reviewed",
+    source: "original",
+    questionText: "An atom has **6 protons**. Which element is it?",
     options: ["Carbon", "Oxygen", "Nitrogen", "Helium"],
     correctAnswerIndex: 0,
     explanation: "Atomic number = number of protons. 6 protons = carbon.",
     examTip: "Use the periodic table: atomic number is proton count.",
     difficulty: "Foundation",
     xpReward: 20,
+    distractorRationale: [
+      "Correct: Z=6",
+      "Error: Z=8",
+      "Error: Z=7",
+      "Error: Z=2",
+    ],
   }),
   baseYear9Question({
     id: "q-y9-che-02",
@@ -23,8 +31,10 @@ export const year9ChemistryQuestions: PracticeQuestion[] = [
     subjectName: "Chemistry",
     topicCode: topicCode("CHE", "1.1"),
     topicName: "Atoms & Elements",
-    questionText:
-      "Where are electrons found in an atom?",
+    subskillId: "CHE.1.1.electron_shells",
+    status: "reviewed",
+    source: "original",
+    questionText: "Where are electrons found in an atom?",
     options: [
       "In energy levels (shells) around the nucleus",
       "Inside the nucleus with protons",
@@ -37,6 +47,12 @@ export const year9ChemistryQuestions: PracticeQuestion[] = [
     examTip: "Mass is mostly in the nucleus; size is mostly empty space.",
     difficulty: "Foundation",
     xpReward: 20,
+    distractorRationale: [
+      "Correct: shell model",
+      "Error: nucleus has protons/neutrons",
+      "Error: electrons not in nucleus",
+      "Error: nonsensical shell",
+    ],
   }),
   baseYear9Question({
     id: "q-y9-che-03",
@@ -44,6 +60,9 @@ export const year9ChemistryQuestions: PracticeQuestion[] = [
     subjectName: "Chemistry",
     topicCode: topicCode("CHE", "1.2"),
     topicName: "Bonding",
+    subskillId: "CHE.1.2.ionic",
+    status: "reviewed",
+    source: "original",
     questionText:
       "Sodium chloride (NaCl) is held together by which type of bond?",
     options: [
@@ -58,6 +77,12 @@ export const year9ChemistryQuestions: PracticeQuestion[] = [
     examTip: "Covalent = non-metals sharing electrons.",
     difficulty: "Foundation",
     xpReward: 20,
+    distractorRationale: [
+      "Correct: ions",
+      "Error: covalent network wrong",
+      "Error: metallic",
+      "Error: IMF not primary bond in salt",
+    ],
   }),
   baseYear9Question({
     id: "q-y9-che-04",
@@ -65,8 +90,10 @@ export const year9ChemistryQuestions: PracticeQuestion[] = [
     subjectName: "Chemistry",
     topicCode: topicCode("CHE", "1.2"),
     topicName: "Bonding",
-    questionText:
-      "In a molecule of water (H₂O), atoms are joined by…",
+    subskillId: "CHE.1.2.covalent",
+    status: "reviewed",
+    source: "original",
+    questionText: "In a molecule of water (H₂O), atoms are joined by…",
     options: [
       "Covalent bonds",
       "Ionic bonds",
@@ -74,11 +101,17 @@ export const year9ChemistryQuestions: PracticeQuestion[] = [
       "Hydrogen gas bonds",
     ],
     correctAnswerIndex: 0,
-    explanation:
-      "Non-metal atoms share electrons in covalent bonds.",
-    examTip: "Don't confuse covalent bonds with weak hydrogen bonds between molecules.",
+    explanation: "Non-metal atoms share electrons in covalent bonds.",
+    examTip:
+      "Do not confuse covalent bonds with weak hydrogen bonds between molecules.",
     difficulty: "Intermediate",
     xpReward: 25,
+    distractorRationale: [
+      "Correct: shared electrons",
+      "Error: not ionic",
+      "Error: not metal lattice",
+      "Error: invalid bond type",
+    ],
   }),
   baseYear9Question({
     id: "q-y9-che-05",
@@ -86,13 +119,21 @@ export const year9ChemistryQuestions: PracticeQuestion[] = [
     subjectName: "Chemistry",
     topicCode: topicCode("CHE", "2.2"),
     topicName: "Acids & Alkalis",
-    questionText:
-      "What is the pH of a neutral solution at room temperature?",
+    subskillId: "CHE.2.2.ph_neutral",
+    status: "reviewed",
+    source: "original",
+    questionText: "What is the pH of a **neutral** solution at room temperature?",
     options: ["7", "1", "14", "0"],
     correctAnswerIndex: 0,
     explanation: "pH 7 is neutral; below 7 acidic, above 7 alkaline.",
     examTip: "Universal indicator is green at pH 7.",
     difficulty: "Foundation",
     xpReward: 20,
+    distractorRationale: [
+      "Correct: neutral",
+      "Error: strong acid",
+      "Error: strong alkali",
+      "Error: not standard neutral",
+    ],
   }),
 ];

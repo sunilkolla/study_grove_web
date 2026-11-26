@@ -1,5 +1,9 @@
 import type { ReactNode } from "react";
-import type { PracticeQuestionBarChartParams } from "@/types";
+import type {
+  PracticeQuestionBarChartParams,
+  PracticeQuestionBoxPlotParams,
+  PracticeQuestionCumulativeFrequencyParams,
+} from "@/types";
 
 const GRID = "#d4d4d8";
 const GRID_MAJOR = "#a1a1aa";
@@ -205,6 +209,215 @@ export const DEFAULT_HOMEWORK_BAR_CHART: PracticeQuestionBarChartParams = {
     { label: "Year 9", value: 8 },
   ],
 };
+
+function scaleX(
+  x: number,
+  plotX: number,
+  plotW: number,
+  xMin: number,
+  xMax: number,
+) {
+  return plotX + ((x - xMin) / (xMax - xMin)) * plotW;
+}
+
+function scaleY(
+  cf: number,
+  plotY: number,
+  plotH: number,
+  yMax: number,
+) {
+  return plotY + plotH - (cf / yMax) * plotH;
+}
+
+export function ExamCumulativeFrequencyFigure(
+  props: PracticeQuestionCumulativeFrequencyParams,
+) {
+  const plotX = 52;
+  const plotY = 28;
+  const plotW = 400;
+  const plotH = 200;
+  const yTicks = Math.floor(props.yMax / props.yStep);
+  const pathD = props.points
+    .map((p, i) => {
+      const sx = scaleX(p.x, plotX, plotW, props.xMin, props.xMax);
+      const sy = scaleY(p.cf, plotY, plotH, props.yMax);
+      return `${i === 0 ? "M" : "L"} ${sx} ${sy}`;
+    })
+    .join(" ");
+
+  return (
+    <figure
+      className="mx-auto max-w-2xl rounded-lg border border-slate-300 bg-white p-4 shadow-sm dark:border-slate-600 dark:bg-slate-900"
+      aria-label={props.title}
+    >
+      <svg viewBox="0 0 480 300" className="h-auto w-full" role="img">
+        <title>{props.title}</title>
+        <ExamGraphPaper
+          x={plotX}
+          y={plotY}
+          width={plotW}
+          height={plotH}
+          xUnits={20}
+          yUnits={yTicks}
+          majorEvery={2}
+        />
+        <line
+          x1={plotX}
+          y1={plotY}
+          x2={plotX}
+          y2={plotY + plotH}
+          stroke={INK}
+          strokeWidth={1.5}
+        />
+        <line
+          x1={plotX}
+          y1={plotY + plotH}
+          x2={plotX + plotW}
+          y2={plotY + plotH}
+          stroke={INK}
+          strokeWidth={1.5}
+        />
+        <path d={pathD} fill="none" stroke="#2563eb" strokeWidth="2.5" />
+        {props.highlight?.type === "median" && (
+          <>
+            <line
+              x1={plotX}
+              x2={scaleX(props.highlight.xValue, plotX, plotW, props.xMin, props.xMax)}
+              y1={scaleY(props.highlight.cfLine, plotY, plotH, props.yMax)}
+              y2={scaleY(props.highlight.cfLine, plotY, plotH, props.yMax)}
+              stroke="#10B981"
+              strokeDasharray="4 3"
+            />
+            <line
+              x1={scaleX(props.highlight.xValue, plotX, plotW, props.xMin, props.xMax)}
+              x2={scaleX(props.highlight.xValue, plotX, plotW, props.xMin, props.xMax)}
+              y1={scaleY(props.highlight.cfLine, plotY, plotH, props.yMax)}
+              y2={plotY + plotH}
+              stroke="#10B981"
+              strokeDasharray="4 3"
+            />
+          </>
+        )}
+        {props.highlight?.type === "readBelow" && (
+          <>
+            <line
+              x1={scaleX(props.highlight.xValue, plotX, plotW, props.xMin, props.xMax)}
+              x2={scaleX(props.highlight.xValue, plotX, plotW, props.xMin, props.xMax)}
+              y1={plotY + plotH}
+              y2={scaleY(props.highlight.cfValue, plotY, plotH, props.yMax)}
+              stroke="#f59e0b"
+              strokeDasharray="4 3"
+            />
+            <line
+              x1={plotX}
+              x2={scaleX(props.highlight.xValue, plotX, plotW, props.xMin, props.xMax)}
+              y1={scaleY(props.highlight.cfValue, plotY, plotH, props.yMax)}
+              y2={scaleY(props.highlight.cfValue, plotY, plotH, props.yMax)}
+              stroke="#f59e0b"
+              strokeDasharray="4 3"
+            />
+          </>
+        )}
+        <text
+          x={plotX + plotW / 2}
+          y={16}
+          textAnchor="middle"
+          className="fill-zinc-900 text-[13px] font-semibold dark:fill-zinc-100"
+        >
+          {props.title}
+        </text>
+        <text
+          x={plotX + plotW / 2}
+          y={plotY + plotH + 36}
+          textAnchor="middle"
+          className="fill-zinc-800 text-[12px] font-medium dark:fill-zinc-200"
+        >
+          {props.xLabel}
+        </text>
+        <text
+          x={plotX - 38}
+          y={plotY + plotH / 2}
+          textAnchor="middle"
+          transform={`rotate(-90 ${plotX - 38} ${plotY + plotH / 2})`}
+          className="fill-zinc-800 text-[12px] font-medium dark:fill-zinc-200"
+        >
+          {props.yLabel}
+        </text>
+      </svg>
+    </figure>
+  );
+}
+
+export function ExamBoxPlotFigure(props: PracticeQuestionBoxPlotParams) {
+  const axisMin = props.axisMin ?? props.min - 5;
+  const axisMax = props.axisMax ?? props.max + 5;
+  const plotX = 40;
+  const plotY = 55;
+  const plotW = 400;
+  const scale = (v: number) =>
+    plotX + ((v - axisMin) / (axisMax - axisMin)) * plotW;
+  const q1x = scale(props.q1);
+  const q3x = scale(props.q3);
+  const medx = scale(props.median);
+  const minx = scale(props.min);
+  const maxx = scale(props.max);
+
+  return (
+    <figure
+      className="mx-auto max-w-2xl rounded-lg border border-slate-300 bg-white p-4 shadow-sm dark:border-slate-600 dark:bg-slate-900"
+      aria-label={props.title}
+    >
+      <svg viewBox="0 0 480 140" className="h-auto w-full" role="img">
+        <title>{props.title}</title>
+        <line x1={plotX} y1={plotY} x2={plotX + plotW} y2={plotY} stroke="#94a3b8" />
+        <line x1={minx} y1={plotY - 18} x2={minx} y2={plotY + 18} stroke={INK} strokeWidth="2" />
+        <line x1={maxx} y1={plotY - 18} x2={maxx} y2={plotY + 18} stroke={INK} strokeWidth="2" />
+        <line x1={minx} y1={plotY} x2={q1x} y2={plotY} stroke={INK} />
+        <line x1={q3x} y1={plotY} x2={maxx} y2={plotY} stroke={INK} />
+        <rect
+          x={q1x}
+          y={plotY - 16}
+          width={q3x - q1x}
+          height={32}
+          fill="#bae6fd"
+          stroke="#0284c7"
+          strokeWidth="2"
+        />
+        <line x1={medx} y1={plotY - 16} x2={medx} y2={plotY + 16} stroke="#0c4a6e" strokeWidth="2" />
+        {[props.min, props.q1, props.median, props.q3, props.max].map((v) => (
+          <text
+            key={v}
+            x={scale(v)}
+            y={plotY + 42}
+            textAnchor="middle"
+            className="fill-slate-600 text-[10px]"
+          >
+            {v}
+          </text>
+        ))}
+        {props.highlight === "iqr" && (
+          <>
+            <line x1={q1x} y1={plotY - 28} x2={q3x} y2={plotY - 28} stroke="#10B981" strokeWidth="1.5" />
+            <text x={(q1x + q3x) / 2} y={plotY - 32} textAnchor="middle" className="fill-emerald-700 text-[9px] font-bold">
+              IQR
+            </text>
+          </>
+        )}
+        {props.highlight === "range" && (
+          <>
+            <line x1={minx} y1={plotY - 28} x2={maxx} y2={plotY - 28} stroke="#10B981" strokeWidth="1.5" />
+            <text x={(minx + maxx) / 2} y={plotY - 32} textAnchor="middle" className="fill-emerald-700 text-[9px] font-bold">
+              Range
+            </text>
+          </>
+        )}
+        <text x={plotX + plotW / 2} y={18} textAnchor="middle" className="fill-zinc-900 text-[13px] font-semibold dark:fill-zinc-100">
+          {props.title}
+        </text>
+      </svg>
+    </figure>
+  );
+}
 
 export const DEFAULT_BUS_STOP_CHART: PracticeQuestionBarChartParams = {
   kind: "barChart",

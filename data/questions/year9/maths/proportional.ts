@@ -1,5 +1,6 @@
 import type { PracticeQuestion } from "@/types";
 import { baseYear9Question, topicCode } from "../helpers";
+import { INCLUDE_GENERATED_QUESTIONS } from "./generatedFlags";
 import { buildProportionalExpansion } from "./topicExpansions";
 
 const PROP = "Proportional Reasoning";
@@ -154,5 +155,5 @@ const year9MathsProportionalCore: PracticeQuestion[] = [
 
 export const year9MathsProportionalQuestions: PracticeQuestion[] = [
   ...year9MathsProportionalCore,
-  ...buildProportionalExpansion(),
+  ...(INCLUDE_GENERATED_QUESTIONS ? buildProportionalExpansion() : []),
 ];

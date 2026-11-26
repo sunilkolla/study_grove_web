@@ -117,6 +117,13 @@ export function QuizCard({
           <span className="font-semibold text-slate-600 dark:text-[#cdd9ea]">
             {question.topicName}
           </span>
+          <span className="font-medium text-slate-400">·</span>
+          <span className="rounded-md bg-slate-100 px-1.5 py-0.5 font-semibold text-slate-600 dark:bg-[#1a2437] dark:text-[#a0b9d9]">
+            {question.difficulty}
+          </span>
+          <span className="rounded-md border border-slate-200 px-1.5 py-0.5 font-semibold text-slate-500 dark:border-[#2e4a73] dark:text-[#a0b9d9]">
+            {question.examBoard}
+          </span>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
           {masteryPercent !== undefined && masteryStatus && (

@@ -22,6 +22,9 @@ export type QuestionDifficulty = "Foundation" | "Intermediate" | "Higher";
 export type FocusStatus = "COMPLETED" | "ABANDONED" | "IN_PROGRESS";
 export type QuestionType = "MULTIPLE_CHOICE" | "FILL_IN_BLANK" | "MARK_SCHEME";
 
+export type PracticeQuestionSource = "original" | "adapted";
+export type PracticeQuestionStatus = "draft" | "reviewed";
+
 // —— Practice & quiz ——
 export interface PracticeQuestion {
   id: string;
@@ -38,6 +41,12 @@ export interface PracticeQuestion {
   yearGroup: YearGroup;
   difficulty: QuestionDifficulty;
   xpReward: number;
+  /** Fine-grained skill tag, e.g. MAT.3.3.cf_median */
+  subskillId?: string;
+  /** Internal QA: why each option is right or wrong (not shown in UI). */
+  distractorRationale?: [string, string, string, string];
+  source?: PracticeQuestionSource;
+  status?: PracticeQuestionStatus;
   /** Renders an SVG in the quiz UI when set (e.g. Year 9 maths). */
   diagramKey?: string;
   diagramParams?: PracticeQuestionDiagramParams;
@@ -53,7 +62,62 @@ export type PracticeQuestionBarChartParams = {
   bars: { label: string; value: number }[];
 };
 
-export type PracticeQuestionDiagramParams = PracticeQuestionBarChartParams;
+export type PracticeQuestionCumulativeFrequencyParams = {
+  kind: "cumulativeFrequency";
+  title: string;
+  xLabel: string;
+  yLabel: string;
+  xMin: number;
+  xMax: number;
+  xStep: number;
+  yMax: number;
+  yStep: number;
+  totalFrequency: number;
+  /** Smooth CF curve through upper class bounds (x) and cumulative totals (y). */
+  points: { x: number; cf: number }[];
+  highlight?: {
+    type: "median";
+    xValue: number;
+    cfLine: number;
+  } | {
+    type: "readBelow";
+    xValue: number;
+    cfValue: number;
+  } | {
+    type: "cfPosition";
+    cfValue: number;
+  };
+};
+
+export type PracticeQuestionBoxPlotParams = {
+  kind: "boxPlot";
+  title: string;
+  min: number;
+  q1: number;
+  median: number;
+  q3: number;
+  max: number;
+  axisMin?: number;
+  axisMax?: number;
+  highlight?: "iqr" | "range";
+};
+
+export type PracticeQuestionParallelLinesParams = {
+  kind: "parallelLines";
+  lineA: string;
+  lineB: string;
+  /** Degrees shown on the diagram */
+  givenAngle: number;
+  /** Label for the angle to find */
+  unknownLabel: string;
+  angleRelation: "alternate" | "coInterior" | "corresponding";
+};
+
+export type PracticeQuestionDiagramParams =
+  | PracticeQuestionBarChartParams
+  | PracticeQuestionCumulativeFrequencyParams
+  | PracticeQuestionBoxPlotParams
+  | PracticeQuestionParallelLinesParams;
 
 // —— Tasks / revision schedule ——
 export type RevisionTaskKind =

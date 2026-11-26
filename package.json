@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "validate:questions": "tsx scripts/validate-questions.ts",
+    "build": "npm run validate:questions && next build",
     "start": "next start",
     "lint": "eslint"
   },
@@ -22,6 +23,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
     "tailwindcss": "4.3.3",
+    "tsx": "^4.19.2",
     "typescript": "^5"
   }
 }

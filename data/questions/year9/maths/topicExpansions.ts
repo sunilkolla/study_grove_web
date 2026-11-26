@@ -1,5 +1,7 @@
 import type { PracticeQuestion, QuestionDifficulty } from "@/types";
 import { baseYear9Question, topicCode } from "../helpers";
+import { generateCoInteriorQuestion } from "./generators/coInterior";
+import { generateCfMedianPositionQuestion } from "./generators/cfMedianPosition";
 
 const GEO = "Geometrical Reasoning";
 const SIM = "Simultaneous Equations";
@@ -68,6 +70,8 @@ function mk({
     difficulty,
     xpReward: xp,
     diagramKey,
+    status: "draft",
+    source: "original",
   });
 }
 
@@ -118,20 +122,8 @@ export function buildGeometricalExpansion(): PracticeQuestion[] {
 
   const coInterior = [62, 74, 88, 102, 118, 128];
   for (const given of coInterior) {
-    const other = 180 - given;
     out.push(
-      mk({
-        id: `q-y9-mat-geo-${n++}`,
-        subtopic: "1.1",
-        topicName: GEO,
-        questionText: `Use the diagram. Parallel lines cut by a transversal. One co-interior angle is ${given}°. Find the other.`,
-        options: [`${other}°`, `${given}°`, `${90}°`, `${360 - given}°`],
-        correctAnswerIndex: 0,
-        explanation: `Co-interior angles sum to 180°: 180 − ${given} = ${other}°.`,
-        examTip: "Co-interior angles are supplementary.",
-        difficulty: "Foundation",
-        diagramKey: "geo.parallel",
-      }),
+      generateCoInteriorQuestion({ given, idSuffix: String(n++) }),
     );
   }
 
@@ -437,26 +429,8 @@ export function buildStatisticsExpansion(): PracticeQuestion[] {
     );
   }
 
-  const cfReads = [
-    { n: 60, medianPos: 30 },
-    { n: 80, medianPos: 40 },
-    { n: 100, medianPos: 50 },
-    { n: 120, medianPos: 60 },
-  ];
-  for (const c of cfReads) {
-    out.push(
-      mk({
-        id: `q-y9-mat-stat-${n++}`,
-        subtopic: "3.3",
-        topicName: STAT,
-        questionText: `Use the diagram. ${c.n} pupils — on a cumulative frequency curve, read the median position on the CF axis.`,
-        options: [`${c.medianPos}`, `${c.n}`, `${c.n / 4}`, `${c.n - 10}`],
-        correctAnswerIndex: 0,
-        explanation: `Median at n/2 = ${c.medianPos}.`,
-        difficulty: "Foundation",
-        diagramKey: "stat.cf_median",
-      }),
-    );
+  for (const nPupils of [72, 96]) {
+    out.push(generateCfMedianPositionQuestion(nPupils, String(n++)));
   }
 
   const groupedMeans = [

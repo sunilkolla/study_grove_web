@@ -1,5 +1,6 @@
 import type { PracticeQuestion } from "@/types";
 import { baseYear9Question, topicCode } from "../helpers";
+import { INCLUDE_GENERATED_QUESTIONS } from "./generatedFlags";
 import { buildSimultaneousExpansion } from "./topicExpansions";
 
 const SIM = "Simultaneous Equations";
@@ -193,5 +194,5 @@ const year9MathsSimultaneousCore: PracticeQuestion[] = [
 
 export const year9MathsSimultaneousQuestions: PracticeQuestion[] = [
   ...year9MathsSimultaneousCore,
-  ...buildSimultaneousExpansion(),
+  ...(INCLUDE_GENERATED_QUESTIONS ? buildSimultaneousExpansion() : []),
 ];

@@ -1,5 +1,6 @@
 import type { PracticeQuestion } from "@/types";
 import { baseYear9Question, topicCode } from "../helpers";
+import { INCLUDE_GENERATED_QUESTIONS } from "./generatedFlags";
 import {
   buildGeometricalExpansion,
   GEO_CORE_DIAGRAM_KEYS,
@@ -23,6 +24,9 @@ const year9MathsGeometricalCore: PracticeQuestion[] = [
     examTip: "Co-interior (same-side interior) angles are supplementary.",
     difficulty: "Foundation",
     xpReward: 20,
+    subskillId: "MAT.1.1.co_interior",
+    status: "reviewed",
+    source: "original",
   }),
   baseYear9Question({
     id: "q-y9-mat-02",
@@ -39,6 +43,17 @@ const year9MathsGeometricalCore: PracticeQuestion[] = [
     examTip: "Look for F-shaped alternate angles or Z-shaped angles.",
     difficulty: "Foundation",
     xpReward: 20,
+    subskillId: "MAT.1.1.alternate_angles",
+    status: "reviewed",
+    source: "original",
+    diagramParams: {
+      kind: "parallelLines",
+      lineA: "L",
+      lineB: "M",
+      givenAngle: 48,
+      unknownLabel: "x",
+      angleRelation: "alternate",
+    },
   }),
   baseYear9Question({
     id: "q-y9-mat-03",
@@ -207,9 +222,17 @@ const year9MathsGeometricalCore: PracticeQuestion[] = [
   }),
 ];
 
+function withGeoDiagram(
+  q: PracticeQuestion,
+  fallbackKey: string,
+): PracticeQuestion {
+  if (q.diagramParams) return q;
+  return stampDiagramKey(q, fallbackKey);
+}
+
 export const year9MathsGeometricalQuestions: PracticeQuestion[] = [
   ...year9MathsGeometricalCore.map((q, i) =>
-    stampDiagramKey(q, GEO_CORE_DIAGRAM_KEYS[i] ?? "geo.parallel"),
+    withGeoDiagram(q, GEO_CORE_DIAGRAM_KEYS[i] ?? "geo.parallel"),
   ),
-  ...buildGeometricalExpansion(),
+  ...(INCLUDE_GENERATED_QUESTIONS ? buildGeometricalExpansion() : []),
 ];

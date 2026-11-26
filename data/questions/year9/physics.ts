@@ -1,6 +1,7 @@
 import type { PracticeQuestion } from "@/types";
 import { baseYear9Question, topicCode } from "./helpers";
 
+/** Year 9 physics — use subskillId + reviewed status per QUALITY_CHECKLIST. */
 export const year9PhysicsQuestions: PracticeQuestion[] = [
   baseYear9Question({
     id: "q-y9-phy-01",
@@ -8,8 +9,10 @@ export const year9PhysicsQuestions: PracticeQuestion[] = [
     subjectName: "Physics",
     topicCode: topicCode("PHY", "1.1"),
     topicName: "Physical Changes",
-    questionText:
-      "Which change is a physical change?",
+    subskillId: "PHY.1.1.physical_chemical",
+    status: "reviewed",
+    source: "original",
+    questionText: "Which change is a **physical** change?",
     options: [
       "Ice melting to water",
       "Iron rusting",
@@ -22,6 +25,12 @@ export const year9PhysicsQuestions: PracticeQuestion[] = [
     examTip: "New substances = chemical change; change of state = physical.",
     difficulty: "Foundation",
     xpReward: 20,
+    distractorRationale: [
+      "Correct: state change only",
+      "Error: new substance (rust)",
+      "Error: combustion",
+      "Error: reaction with oxygen",
+    ],
   }),
   baseYear9Question({
     id: "q-y9-phy-02",
@@ -29,8 +38,10 @@ export const year9PhysicsQuestions: PracticeQuestion[] = [
     subjectName: "Physics",
     topicCode: topicCode("PHY", "1.1"),
     topicName: "Physical Changes",
-    questionText:
-      "The particles in a solid are best described as…",
+    subskillId: "PHY.1.1.particle_model",
+    status: "reviewed",
+    source: "original",
+    questionText: "The particles in a solid are best described as…",
     options: [
       "Close together and vibrating in fixed positions",
       "Far apart and moving quickly at random",
@@ -43,6 +54,12 @@ export const year9PhysicsQuestions: PracticeQuestion[] = [
     examTip: "Liquid = touching but flowing; gas = far apart.",
     difficulty: "Foundation",
     xpReward: 20,
+    distractorRationale: [
+      "Correct: particle model for solids",
+      "Error: gas description",
+      "Error: liquid description",
+      "Error: particles do vibrate",
+    ],
   }),
   baseYear9Question({
     id: "q-y9-phy-03",
@@ -50,6 +67,9 @@ export const year9PhysicsQuestions: PracticeQuestion[] = [
     subjectName: "Physics",
     topicCode: topicCode("PHY", "1.5"),
     topicName: "Energy Stores & Transfers",
+    subskillId: "PHY.1.5.energy_stores",
+    status: "reviewed",
+    source: "original",
     questionText:
       "A battery-powered torch stores energy mainly as…",
     options: [
@@ -64,6 +84,12 @@ export const year9PhysicsQuestions: PracticeQuestion[] = [
     examTip: "Name the store before describing the pathway.",
     difficulty: "Foundation",
     xpReward: 20,
+    distractorRationale: [
+      "Correct: chemical store",
+      "Error: height-related store",
+      "Error: spring store",
+      "Error: nuclear not in torch",
+    ],
   }),
   baseYear9Question({
     id: "q-y9-phy-04",
@@ -71,6 +97,9 @@ export const year9PhysicsQuestions: PracticeQuestion[] = [
     subjectName: "Physics",
     topicCode: topicCode("PHY", "1.5"),
     topicName: "Energy Stores & Transfers",
+    subskillId: "PHY.1.5.convection",
+    status: "reviewed",
+    source: "original",
     questionText:
       "Thermal energy transfer through liquids and gases by bulk movement is called…",
     options: ["Convection", "Conduction", "Insulation", "Evaporation only"],
@@ -80,6 +109,12 @@ export const year9PhysicsQuestions: PracticeQuestion[] = [
     examTip: "Conduction needs particles in contact in solids mainly.",
     difficulty: "Intermediate",
     xpReward: 25,
+    distractorRationale: [
+      "Correct: convection definition",
+      "Error: particle vibration transfer",
+      "Error: reduction of transfer not a mechanism",
+      "Error: phase change not bulk movement",
+    ],
   }),
   baseYear9Question({
     id: "q-y9-phy-05",
@@ -87,19 +122,27 @@ export const year9PhysicsQuestions: PracticeQuestion[] = [
     subjectName: "Physics",
     topicCode: topicCode("PHY", "2.2"),
     topicName: "Acceleration",
+    subskillId: "PHY.2.2.acceleration",
+    status: "reviewed",
+    source: "original",
     questionText:
-      "A car speeds up from rest. Which quantity is changing if its velocity increases?",
+      "A car speeds up from rest. Which statement is **correct**?",
     options: [
-      "Acceleration is occurring",
-      "The car must be at constant speed",
-      "Mass is always decreasing",
-      "Distance must be zero",
+      "Its velocity is changing, so it is accelerating",
+      "It must travel at constant speed",
+      "Its mass must be decreasing",
+      "Its distance travelled must be zero",
     ],
     correctAnswerIndex: 0,
-    explanation:
-      "Acceleration is the rate of change of velocity.",
+    explanation: "Acceleration is the rate of change of velocity.",
     examTip: "Velocity has direction; speeding up is acceleration.",
     difficulty: "Foundation",
     xpReward: 20,
+    distractorRationale: [
+      "Correct: changing velocity",
+      "Error: contradicts speeding up",
+      "Error: mass unrelated",
+      "Error: distance increases",
+    ],
   }),
 ];

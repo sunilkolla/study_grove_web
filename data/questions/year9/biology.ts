@@ -8,6 +8,9 @@ export const year9BiologyQuestions: PracticeQuestion[] = [
     subjectName: "Biology",
     topicCode: topicCode("BIO", "4.1.1"),
     topicName: "Cell Structure",
+    subskillId: "BIO.4.1.1.plant_specialisation",
+    status: "reviewed",
+    source: "original",
     questionText:
       "Which structure is found in plant cells but not in animal cells?",
     options: [
@@ -22,6 +25,12 @@ export const year9BiologyQuestions: PracticeQuestion[] = [
     examTip: "Remember: cell wall + chloroplast + large permanent vacuole = plant.",
     difficulty: "Foundation",
     xpReward: 20,
+    distractorRationale: [
+      "Correct: photosynthesis organelle",
+      "Error: in both cell types",
+      "Error: in both",
+      "Error: in both",
+    ],
   }),
   baseYear9Question({
     id: "q-y9-bio-02",
@@ -29,8 +38,10 @@ export const year9BiologyQuestions: PracticeQuestion[] = [
     subjectName: "Biology",
     topicCode: topicCode("BIO", "4.1.1"),
     topicName: "Cell Structure",
-    questionText:
-      "What is the function of the nucleus in a eukaryotic cell?",
+    subskillId: "BIO.4.1.1.nucleus",
+    status: "reviewed",
+    source: "original",
+    questionText: "What is the function of the nucleus in a eukaryotic cell?",
     options: [
       "Contains genetic material and controls cell activities",
       "Releases energy from respiration",
@@ -43,6 +54,12 @@ export const year9BiologyQuestions: PracticeQuestion[] = [
     examTip: "Mitochondria = energy; ribosomes = protein synthesis.",
     difficulty: "Foundation",
     xpReward: 20,
+    distractorRationale: [
+      "Correct: control centre",
+      "Error: mitochondrial role",
+      "Error: ribosome / RER",
+      "Error: vacuole role",
+    ],
   }),
   baseYear9Question({
     id: "q-y9-bio-03",
@@ -50,8 +67,11 @@ export const year9BiologyQuestions: PracticeQuestion[] = [
     subjectName: "Biology",
     topicCode: topicCode("BIO", "4.1.3"),
     topicName: "Transport in Cells",
+    subskillId: "BIO.4.1.3.diffusion",
+    status: "reviewed",
+    source: "original",
     questionText:
-      "Which process moves particles from an area of high concentration to low concentration without using energy?",
+      "Which process moves particles from high concentration to low concentration **without** using energy?",
     options: ["Diffusion", "Active transport", "Osmosis only", "Respiration"],
     correctAnswerIndex: 0,
     explanation:
@@ -59,6 +79,12 @@ export const year9BiologyQuestions: PracticeQuestion[] = [
     examTip: "Osmosis is diffusion of water — still passive.",
     difficulty: "Foundation",
     xpReward: 20,
+    distractorRationale: [
+      "Correct: passive net movement",
+      "Error: requires ATP",
+      "Error: osmosis is water-specific diffusion",
+      "Error: metabolic process",
+    ],
   }),
   baseYear9Question({
     id: "q-y9-bio-04",
@@ -66,8 +92,11 @@ export const year9BiologyQuestions: PracticeQuestion[] = [
     subjectName: "Biology",
     topicCode: topicCode("BIO", "4.1.3"),
     topicName: "Transport in Cells",
+    subskillId: "BIO.4.1.3.osmosis",
+    status: "reviewed",
+    source: "original",
     questionText:
-      "In osmosis, water molecules move through a partially permeable membrane from…",
+      "In osmosis, water moves through a partially permeable membrane from…",
     options: [
       "A dilute solution to a more concentrated solution",
       "A concentrated solution to a dilute solution",
@@ -76,10 +105,16 @@ export const year9BiologyQuestions: PracticeQuestion[] = [
     ],
     correctAnswerIndex: 0,
     explanation:
-      "Water moves to where solute concentration is higher (dilute → concentrated side of membrane).",
-    examTip: "Link 'dilute' with higher water potential.",
+      "Water moves toward higher solute concentration (net into more concentrated side).",
+    examTip: "Link dilute with higher water potential.",
     difficulty: "Intermediate",
     xpReward: 25,
+    distractorRationale: [
+      "Correct: water to concentrated",
+      "Error: reverse gradient",
+      "Error: osmosis is passive",
+      "Error: not thermal motion rule",
+    ],
   }),
   baseYear9Question({
     id: "q-y9-bio-05",
@@ -87,8 +122,10 @@ export const year9BiologyQuestions: PracticeQuestion[] = [
     subjectName: "Biology",
     topicCode: topicCode("BIO", "4.2.1"),
     topicName: "Digestive System",
-    questionText:
-      "Where does most chemical digestion of food take place?",
+    subskillId: "BIO.4.2.1.digestion_site",
+    status: "reviewed",
+    source: "original",
+    questionText: "Where does most **chemical digestion** of food take place?",
     options: [
       "Small intestine",
       "Stomach only",
@@ -97,9 +134,15 @@ export const year9BiologyQuestions: PracticeQuestion[] = [
     ],
     correctAnswerIndex: 0,
     explanation:
-      "Enzymes in the small intestine complete digestion and absorption follows.",
-    examTip: "Stomach starts protein digestion; small intestine finishes most.",
+      "Enzymes in the small intestine complete digestion; absorption follows.",
+    examTip: "Stomach starts protein digestion, but most happens in small intestine.",
     difficulty: "Foundation",
     xpReward: 20,
+    distractorRationale: [
+      "Correct: main digestive organ",
+      "Error: partial only",
+      "Error: absorption / water",
+      "Error: transport tube",
+    ],
   }),
 ];

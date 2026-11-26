@@ -1,6 +1,9 @@
 import {
   ExamBarChartFigure,
+  ExamBoxPlotFigure,
+  ExamCumulativeFrequencyFigure,
 } from "./diagrams/examChart/ExamChartPrimitives";
+import { ExamParallelLinesFigure } from "./diagrams/examChart/ExamGeoPrimitives";
 import { MathsDiagramByKey } from "./diagrams/year9MathsDiagrams";
 import type { PracticeQuestionDiagramParams } from "@/types";
 
@@ -18,6 +21,15 @@ export function QuizDiagram({
 }: QuizDiagramProps) {
   if (diagramParams?.kind === "barChart") {
     return <ExamBarChartFigure {...diagramParams} />;
+  }
+  if (diagramParams?.kind === "cumulativeFrequency") {
+    return <ExamCumulativeFrequencyFigure {...diagramParams} />;
+  }
+  if (diagramParams?.kind === "boxPlot") {
+    return <ExamBoxPlotFigure {...diagramParams} />;
+  }
+  if (diagramParams?.kind === "parallelLines") {
+    return <ExamParallelLinesFigure {...diagramParams} />;
   }
   if (diagramKey) {
     return <MathsDiagramByKey diagramKey={diagramKey} />;

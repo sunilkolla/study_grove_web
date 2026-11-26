@@ -1,10 +1,12 @@
 import type { PracticeQuestion } from "@/types";
 import { baseYear9Question, topicCode } from "../helpers";
+import { INCLUDE_GENERATED_QUESTIONS } from "./generatedFlags";
 import {
   buildStatisticsExpansion,
   STAT_CORE_DIAGRAM_KEYS,
   stampDiagramKey,
 } from "./topicExpansions";
+import { year9MathsStatisticsGoldCfBox } from "./statisticsGoldCfBox";
 
 const STAT = "Statistics";
 
@@ -83,6 +85,19 @@ const year9MathsStatisticsCore: PracticeQuestion[] = [
     examTip: "Read Q1 and Q3 from the edges of the box, not the whiskers.",
     difficulty: "Intermediate",
     xpReward: 25,
+    subskillId: "MAT.3.2.box_iqr",
+    status: "reviewed",
+    source: "original",
+    diagramParams: {
+      kind: "boxPlot",
+      title: "Test scores",
+      min: 10,
+      q1: 10,
+      median: 16,
+      q3: 22,
+      max: 40,
+      highlight: "iqr",
+    },
   }),
   baseYear9Question({
     id: "q-y9-mat-31",
@@ -113,6 +128,30 @@ const year9MathsStatisticsCore: PracticeQuestion[] = [
     examTip: "Median: CF = n/2; quartiles: n/4 and 3n/4.",
     difficulty: "Intermediate",
     xpReward: 25,
+    subskillId: "MAT.3.3.cf_median_estimate",
+    status: "reviewed",
+    source: "original",
+    diagramParams: {
+      kind: "cumulativeFrequency",
+      title: "Test scores — 100 students",
+      xLabel: "Score",
+      yLabel: "Cumulative frequency",
+      xMin: 0,
+      xMax: 100,
+      xStep: 10,
+      yMax: 100,
+      yStep: 25,
+      totalFrequency: 100,
+      points: [
+        { x: 20, cf: 10 },
+        { x: 40, cf: 35 },
+        { x: 50, cf: 50 },
+        { x: 60, cf: 72 },
+        { x: 80, cf: 92 },
+        { x: 100, cf: 100 },
+      ],
+      highlight: { type: "median", xValue: 50, cfLine: 50 },
+    },
   }),
   baseYear9Question({
     id: "q-y9-mat-33",
@@ -143,6 +182,29 @@ const year9MathsStatisticsCore: PracticeQuestion[] = [
     examTip: "Less than means read value on bottom axis first.",
     difficulty: "Intermediate",
     xpReward: 25,
+    subskillId: "MAT.3.3.cf_read_below",
+    status: "reviewed",
+    source: "original",
+    diagramParams: {
+      kind: "cumulativeFrequency",
+      title: "Test scores",
+      xLabel: "Score",
+      yLabel: "Cumulative frequency",
+      xMin: 0,
+      xMax: 100,
+      xStep: 10,
+      yMax: 100,
+      yStep: 25,
+      totalFrequency: 100,
+      points: [
+        { x: 20, cf: 12 },
+        { x: 40, cf: 38 },
+        { x: 55, cf: 72 },
+        { x: 70, cf: 88 },
+        { x: 100, cf: 100 },
+      ],
+      highlight: { type: "readBelow", xValue: 55, cfValue: 72 },
+    },
   }),
   baseYear9Question({
     id: "q-y9-mat-35",
@@ -158,6 +220,19 @@ const year9MathsStatisticsCore: PracticeQuestion[] = [
     examTip: "Range uses whisker ends; IQR uses only the box.",
     difficulty: "Foundation",
     xpReward: 20,
+    subskillId: "MAT.3.4.box_range",
+    status: "reviewed",
+    source: "original",
+    diagramParams: {
+      kind: "boxPlot",
+      title: "Test marks",
+      min: 10,
+      q1: 16,
+      median: 22,
+      q3: 28,
+      max: 40,
+      highlight: "range",
+    },
   }),
   baseYear9Question({
     id: "q-y9-mat-36",
@@ -203,6 +278,9 @@ const year9MathsStatisticsCore: PracticeQuestion[] = [
     examTip: "Read the height of each bar against the scale on the vertical axis.",
     difficulty: "Foundation",
     xpReward: 20,
+    subskillId: "MAT.3.6.bar_compare",
+    status: "reviewed",
+    source: "original",
     diagramParams: {
       kind: "barChart",
       title: "Number of people waiting at each bus stop at 3 pm",
@@ -260,9 +338,18 @@ const year9MathsStatisticsCore: PracticeQuestion[] = [
   }),
 ];
 
+function withDiagramFallback(
+  q: PracticeQuestion,
+  fallbackKey: string,
+): PracticeQuestion {
+  if (q.diagramParams) return q;
+  return stampDiagramKey(q, fallbackKey);
+}
+
 export const year9MathsStatisticsQuestions: PracticeQuestion[] = [
   ...year9MathsStatisticsCore.map((q, i) =>
-    stampDiagramKey(q, STAT_CORE_DIAGRAM_KEYS[i] ?? "stat.dot_plot"),
+    withDiagramFallback(q, STAT_CORE_DIAGRAM_KEYS[i] ?? "stat.dot_plot"),
   ),
-  ...buildStatisticsExpansion(),
+  ...year9MathsStatisticsGoldCfBox,
+  ...(INCLUDE_GENERATED_QUESTIONS ? buildStatisticsExpansion() : []),
 ];
