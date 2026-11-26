@@ -11,12 +11,16 @@ import {
   SYLLABUS_FOCUS_CHANGED,
 } from "@/lib/studyFocusBridge";
 import {
+  broadcastFocusSession,
+  type FocusSessionPhase,
+} from "@/lib/focusEvents";
+import {
   treeLabelForDuration,
   type FocusDuration,
 } from "@/services/focusService";
 import type { SubjectCode } from "@/types";
 
-export type FocusSessionPhase = "idle" | "running" | "paused" | "completed";
+export type { FocusSessionPhase } from "@/lib/focusEvents";
 
 export type FocusTimerSnapshot = {
   selectedDuration: FocusDuration;
@@ -260,6 +264,18 @@ export function useFocusTimer({
     formattedTime,
     treeLabel,
   };
+
+  useEffect(() => {
+    broadcastFocusSession({
+      phase,
+      formattedTime,
+      selectedDuration,
+      isLive: phase === "running" || phase === "paused",
+      focusMode,
+      subject,
+      treeLabel,
+    });
+  }, [phase, formattedTime, selectedDuration, focusMode, subject, treeLabel]);
 
   return {
     snapshot,

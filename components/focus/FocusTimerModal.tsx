@@ -10,6 +10,7 @@ import {
   TreePine,
   X,
 } from "lucide-react";
+import { requestFocusReset } from "@/lib/focusEvents";
 import { FOCUS_SUBJECT_OPTIONS } from "@/lib/focusSubjectOptions";
 import { subjectCodeToLabel } from "@/lib/studyFocusBridge";
 import { xpForFocusDuration, type FocusDuration } from "@/services/focusService";
@@ -75,6 +76,15 @@ export function FocusTimerModal({
     startFocus();
     onMinimize();
   };
+
+  const sessionLive = isActive || timer.phase === "paused";
+
+  const pillBar =
+    "flex flex-wrap items-center justify-center gap-1 rounded-lg border border-[#395e90] bg-[#273853] p-1";
+  const pillActive =
+    "rounded-md bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-emerald-500 active:scale-[0.98]";
+  const pillMuted =
+    "rounded-md px-4 py-2 text-xs font-semibold text-[#a0b9d9] transition-colors hover:bg-[#395e90]/40 hover:text-white active:scale-[0.98]";
 
   if (!isOpen) return null;
 
@@ -259,50 +269,56 @@ export function FocusTimerModal({
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  if (isActive) {
-                    toggleFocus();
-                    return;
-                  }
-                  if (timer.phase === "paused") {
-                    startFocus();
-                    onMinimize();
-                    return;
-                  }
-                  handleStartFocus();
-                }}
-                className="flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg transition-transform active:scale-95 hover:bg-emerald-500"
-              >
-                {isActive || timer.phase === "paused" ? (
-                  isActive ? (
-                    <>
-                      <Pause className="h-4 w-4 fill-white" />
+            <div className={pillBar}>
+              {sessionLive ? (
+                <>
+                  <span
+                    className="min-w-[4.5rem] px-2 py-2 text-center font-mono text-sm font-bold tabular-nums text-white"
+                    aria-live="polite"
+                  >
+                    {formattedTime}
+                  </span>
+                  {isActive ? (
+                    <button
+                      type="button"
+                      onClick={() => toggleFocus()}
+                      className={`flex items-center gap-1.5 ${pillActive}`}
+                    >
+                      <Pause className="h-3.5 w-3.5 fill-white" aria-hidden />
                       Pause
-                    </>
+                    </button>
                   ) : (
-                    <>
-                      <Play className="h-4 w-4 fill-white" />
-                      Resume &amp; minimize
-                    </>
-                  )
-                ) : (
-                  <>
-                    <Play className="h-4 w-4 fill-white" />
-                    Start Focus
-                  </>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={handleReset}
-                className="rounded-xl bg-[#273853] p-2.5 text-[#a0b9d9] transition-colors hover:bg-[#395e90] hover:text-white"
-                title="Reset timer"
-              >
-                <RotateCcw className="h-4 w-4" />
-              </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        startFocus();
+                        onMinimize();
+                      }}
+                      className={`flex items-center gap-1.5 ${pillActive}`}
+                    >
+                      <Play className="h-3.5 w-3.5 fill-white" aria-hidden />
+                      Resume
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={requestFocusReset}
+                    className={`flex items-center gap-1.5 ${pillMuted}`}
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" aria-hidden />
+                    Restart
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleStartFocus}
+                  className={`flex w-full items-center justify-center gap-2 ${pillActive} py-2.5 text-sm`}
+                >
+                  <Play className="h-4 w-4 fill-white" aria-hidden />
+                  Start focus
+                </button>
+              )}
             </div>
 
             <div className="flex w-full max-w-sm items-center justify-between rounded-xl border border-[#395e90]/50 bg-[#273853]/60 px-4 py-2 text-xs">

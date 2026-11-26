@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { FOCUS_PRESET, OPEN_FOCUS_TIMER } from "@/lib/focusEvents";
+import {
+  FOCUS_PRESET,
+  FOCUS_RESET,
+  FOCUS_TOGGLE,
+  OPEN_FOCUS_TIMER,
+} from "@/lib/focusEvents";
 import { subjectCodeToLabel } from "@/lib/studyFocusBridge";
 import type { FocusMode } from "@/lib/focusPreferences";
 import { TASKS_CHANGED, notifyTasksChanged } from "@/lib/scheduleEvents";
@@ -198,6 +203,28 @@ export function AppShellClient({ children }: AppShellClientProps) {
     focusTimer.setSyncWithSyllabus(false);
     pendingFocusSubjectRef.current = null;
   }, [focusModalOpen, focusTimer.setFocusMode, focusTimer.setSubject, focusTimer.setSyncWithSyllabus]);
+
+  useEffect(() => {
+    const onToggle = () => focusTimer.toggleFocus();
+    const onReset = () => {
+      if (
+        focusTimer.phase === "running" ||
+        focusTimer.phase === "paused"
+      ) {
+        const ok = window.confirm(
+          "Restart this session? The timer resets and this sprint will not plant a tree.",
+        );
+        if (!ok) return;
+      }
+      focusTimer.handleReset();
+    };
+    window.addEventListener(FOCUS_TOGGLE, onToggle);
+    window.addEventListener(FOCUS_RESET, onReset);
+    return () => {
+      window.removeEventListener(FOCUS_TOGGLE, onToggle);
+      window.removeEventListener(FOCUS_RESET, onReset);
+    };
+  }, [focusTimer.phase, focusTimer.toggleFocus, focusTimer.handleReset]);
 
   const focusIsLive =
     focusTimer.phase === "running" || focusTimer.phase === "paused";

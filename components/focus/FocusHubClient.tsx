@@ -1,10 +1,15 @@
 "use client";
 
-import { Play, TreePine } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Pause, Play, RotateCcw, TreePine } from "lucide-react";
 import { SYLLABUS_SUBJECTS } from "@/data/gcseSyllabus";
 import {
+  type FocusSessionBroadcast,
+  FOCUS_SESSION_CHANGED,
   requestFocusPresetCustom,
   requestFocusPresetForSubject,
+  requestFocusReset,
+  requestFocusToggle,
   requestOpenFocusTimer,
 } from "@/lib/focusEvents";
 import { subjectCodeToLabel } from "@/lib/studyFocusBridge";
@@ -92,6 +97,25 @@ export function FocusHubClient({
   const counts = countTreesByGroveBucket(trees);
   const customCount = counts.CUSTOM ?? 0;
 
+  const [session, setSession] = useState<FocusSessionBroadcast | null>(null);
+
+  useEffect(() => {
+    const onSession = (e: Event) => {
+      setSession((e as CustomEvent<FocusSessionBroadcast>).detail);
+    };
+    window.addEventListener(FOCUS_SESSION_CHANGED, onSession);
+    return () => window.removeEventListener(FOCUS_SESSION_CHANGED, onSession);
+  }, []);
+
+  const focusLive = session?.isLive ?? false;
+
+  const sessionSubjectLabel =
+    session && focusLive
+      ? session.focusMode === "custom"
+        ? "Custom focus"
+        : subjectCodeToLabel(session.subject)
+      : null;
+
   return (
     <section className="mx-auto w-full max-w-4xl space-y-6">
       <header className="overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#0f172a] px-5 py-6 text-white shadow-md sm:px-8 sm:py-8">
@@ -108,14 +132,66 @@ export function FocusHubClient({
               Stay in your study zone while solving GCSE practice problems.
               Every 25m or 50m sprint plants a tree in your subject Grove.
             </p>
-            <button
-              type="button"
-              onClick={requestOpenFocusTimer}
-              className="mt-2 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-[#0f172a] shadow-md transition hover:bg-slate-100 active:scale-[0.98]"
-            >
-              <Play className="h-4 w-4 fill-[#0f172a]" />
-              Start focus timer
-            </button>
+            {focusLive && session ? (
+              <div className="mt-2 space-y-2">
+                <p className="text-xs font-semibold text-emerald-200/95">
+                  Growing for{" "}
+                  <span className="text-white">{sessionSubjectLabel}</span>
+                  <span className="text-slate-400">
+                    {" "}
+                    · {session.selectedDuration}m · {session.treeLabel}
+                  </span>
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-1 rounded-lg border border-white/20 bg-white/10 p-1 backdrop-blur-sm">
+                  <span className="min-w-[4.25rem] px-2 py-2 text-center font-mono text-sm font-bold tabular-nums text-white">
+                    {session.formattedTime}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={requestFocusToggle}
+                    className="inline-flex items-center gap-1.5 rounded-md bg-emerald-500 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-400 active:scale-[0.98]"
+                  >
+                    {session.phase === "running" ? (
+                      <>
+                        <Pause className="h-3.5 w-3.5 fill-white" aria-hidden />
+                        Pause
+                      </>
+                    ) : (
+                      <>
+                        <Play className="h-3.5 w-3.5 fill-white" aria-hidden />
+                        Resume
+                      </>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={requestFocusReset}
+                    className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/10 hover:text-white active:scale-[0.98]"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" aria-hidden />
+                    Restart
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={requestOpenFocusTimer}
+                  className="text-xs font-bold text-emerald-300 underline-offset-2 hover:underline"
+                >
+                  Timer settings
+                </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={requestOpenFocusTimer}
+                className="mt-2 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-[#0f172a] shadow-md transition hover:bg-slate-100 active:scale-[0.98]"
+              >
+                <Play className="h-4 w-4 fill-[#0f172a]" />
+                Start focus timer
+              </button>
+            )}
           </div>
           <div className="shrink-0 text-right sm:pt-1">
             <p className="text-4xl font-extrabold tabular-nums text-[#10B981] sm:text-5xl">
