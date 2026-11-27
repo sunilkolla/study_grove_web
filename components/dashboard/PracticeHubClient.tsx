@@ -4,10 +4,12 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { StudyStreakIndicator } from "@/components/dashboard/StudyStreakIndicator";
 import { PracticeQuizSection } from "@/components/quiz/PracticeQuizSection";
-import { CurrentlyStudyingBanner } from "@/components/topic/CurrentlyStudyingBanner";
 import { SyllabusNavigator } from "@/components/topic/SyllabusNavigator";
 import { SyllabusNavigatorPanel } from "@/components/topic/SyllabusNavigatorPanel";
-import { getSubtopicById } from "@/data/gcseSyllabus";
+import {
+  getSubtopicById,
+  type SyllabusSubjectCode,
+} from "@/data/gcseSyllabus";
 import { useStudyTopicSelection } from "@/hooks/useStudyTopicSelection";
 import { notifyShellDataChanged, SHELL_DATA_CHANGED } from "@/lib/shellEvents";
 import { fetchPracticeQuestions } from "@/services/questionService";
@@ -70,13 +72,12 @@ export function PracticeHubClient({
     [router],
   );
 
-  const handleToggleSelections = useCallback(() => {
-    if (topic.showSyllabus) {
-      topic.setShowSyllabus(false);
-    } else {
-      topic.openSyllabusForSubject(topic.focusSubject);
-    }
-  }, [topic]);
+  const handlePinForSubject = useCallback(
+    (code: SyllabusSubjectCode) => {
+      topic.openSyllabusForSubject(code);
+    },
+    [topic],
+  );
 
   const handlePracticeSubtopic = useCallback(
     (id: string) => {
@@ -115,34 +116,31 @@ export function PracticeHubClient({
     <div className="space-y-3">
       <StudyStreakIndicator stats={userStats} onQuickPractice={scrollToQuiz} />
 
-      <CurrentlyStudyingBanner
-        focusSubject={topic.focusSubject}
-        currentBySubject={topic.currentBySubject}
-        showSyllabus={topic.showSyllabus}
-        onOpenSubject={topic.openSyllabusForSubject}
-        onToggleSelections={handleToggleSelections}
-      />
-
-      <SyllabusNavigatorPanel open={topic.showSyllabus}>
-        <SyllabusNavigator
-          syllabusSubject={topic.syllabusSubject}
-          onSubjectChange={topic.setSyllabusSubject}
-          mainTopics={topic.mainTopics}
-          selectedMainTopicId={topic.selectedMainTopicId}
-          onMainTopicSelect={topic.setSelectedMainTopicId}
-          activeMainTopic={topic.activeMainTopic}
-          pinnedSubtopicId={topic.currentBySubject[topic.syllabusSubject]}
-          onPracticeSubtopic={handlePracticeSubtopic}
-          onPinSubtopic={handlePinSubtopic}
-          onPracticeWholeTopic={handlePracticeWhole}
-        />
-      </SyllabusNavigatorPanel>
-
       <PracticeQuizSection
         questions={questions}
         yearGroup={yearGroup}
         practiceScope={topic.practiceScope}
         topicMasteryPercent={bannerSubtopic?.masteryPercent}
+        pinnedBySubject={topic.currentBySubject}
+        onPinTopic={handlePinForSubject}
+        syllabusPanel={
+          <SyllabusNavigatorPanel open={topic.showSyllabus}>
+            <SyllabusNavigator
+              syllabusSubject={topic.syllabusSubject}
+              onSubjectChange={topic.setSyllabusSubject}
+              mainTopics={topic.mainTopics}
+              selectedMainTopicId={topic.selectedMainTopicId}
+              onMainTopicSelect={topic.setSelectedMainTopicId}
+              activeMainTopic={topic.activeMainTopic}
+              pinnedSubtopicId={topic.currentBySubject[topic.syllabusSubject]}
+              onPracticeSubtopic={handlePracticeSubtopic}
+              onPinSubtopic={handlePinSubtopic}
+              onPracticeWholeTopic={handlePracticeWhole}
+              subjectPinFlow
+              onClose={() => topic.setShowSyllabus(false)}
+            />
+          </SyllabusNavigatorPanel>
+        }
         onQuestionAnswered={(correct, xp) =>
           void handleQuestionAnswered(correct, xp)
         }

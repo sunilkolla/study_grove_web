@@ -1,82 +1,43 @@
 "use client";
 
-import { Settings } from "lucide-react";
-import {
-  SYLLABUS_SUBJECTS,
-  getSubtopicById,
-  type SyllabusSubjectCode,
-} from "@/data/gcseSyllabus";
+import { MapPin } from "lucide-react";
 
 type CurrentlyStudyingBannerProps = {
-  focusSubject: SyllabusSubjectCode;
-  currentBySubject: Record<SyllabusSubjectCode, string>;
-  showSyllabus: boolean;
-  onOpenSubject: (subject: SyllabusSubjectCode) => void;
-  onToggleSelections: () => void;
+  subjectLabel: string;
+  subtopicCode?: string;
+  subtopicName?: string;
+  onPinTopic: () => void;
 };
 
-function topicLinkLabel(
-  subjectLabel: string,
-  pinned: ReturnType<typeof getSubtopicById>,
-): string {
-  if (!pinned) return `${subjectLabel}: —`;
-  return `${subjectLabel}: ${pinned.code} ${pinned.name}`;
-}
-
+/** Compact “Current Study” chip — sits on the subject tabs row (mockup). */
 export function CurrentlyStudyingBanner({
-  focusSubject,
-  currentBySubject,
-  showSyllabus,
-  onOpenSubject,
-  onToggleSelections,
+  subjectLabel,
+  subtopicCode,
+  subtopicName,
+  onPinTopic,
 }: CurrentlyStudyingBannerProps) {
-  return (
-    <section className="rounded-xl bg-gradient-to-br from-[#0d3d32] via-[#0f4d3f] to-[#0a3229] px-3 py-2 text-white shadow-sm sm:px-4 sm:py-2.5">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-        <p className="min-w-0 text-[11px] leading-relaxed text-emerald-50/90 sm:text-xs">
-          <span className="mr-1" aria-hidden>
-            📌
-          </span>
-          <span className="font-medium text-emerald-100/80">Currently topics:</span>{" "}
-          <span className="inline-flex flex-wrap items-center gap-x-1 gap-y-1">
-            {SYLLABUS_SUBJECTS.map((sub, index) => {
-              const pinned = getSubtopicById(currentBySubject[sub.code]);
-              const isFocus = sub.code === focusSubject;
-              const label = topicLinkLabel(sub.label, pinned);
-              return (
-                <span key={sub.code} className="inline-flex items-center">
-                  {index > 0 && (
-                    <span className="mx-0.5 text-emerald-100/40" aria-hidden>
-                      ,
-                    </span>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => onOpenSubject(sub.code)}
-                    title={pinned ? `${pinned.code} ${pinned.name}` : sub.label}
-                    className={`rounded-full border px-2 py-0.5 text-left text-[10px] font-medium transition hover:bg-white/10 sm:text-[11px] ${
-                      isFocus
-                        ? "border-white/45 bg-white/12 text-white"
-                        : "border-white/20 bg-white/5 text-emerald-50"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                </span>
-              );
-            })}
-          </span>
-        </p>
+  const hasPin = Boolean(subtopicCode && subtopicName);
+  const summary = hasPin
+    ? `${subjectLabel} · ${subtopicCode} ${subtopicName}`
+    : `${subjectLabel} · Pin a topic`;
 
-        <button
-          type="button"
-          onClick={onToggleSelections}
-          className="inline-flex shrink-0 items-center justify-center gap-1.5 self-end rounded-lg border border-white/25 bg-white/5 px-3 py-1.5 text-[11px] font-semibold text-white/95 transition hover:bg-white/10 sm:self-center sm:text-xs"
-        >
-          <Settings className="h-3.5 w-3.5 shrink-0" aria-hidden />
-          {showSyllabus ? "Hide Selections" : "Change Selections"}
-        </button>
-      </div>
-    </section>
+  return (
+    <button
+      type="button"
+      onClick={onPinTopic}
+      className="group ml-auto inline-flex max-w-full shrink-0 items-center gap-1.5 rounded-full border border-emerald-200/90 bg-emerald-50/95 px-3 py-1.5 text-left text-[11px] font-semibold text-[#0F5132] shadow-sm transition hover:border-emerald-300 hover:bg-emerald-100/90 active:scale-[0.98] dark:border-emerald-700/50 dark:bg-emerald-950/40 dark:text-emerald-200 dark:hover:bg-emerald-950/70"
+      title="Change pinned weekly topic"
+    >
+      <span className="hidden text-[10px] font-bold uppercase tracking-wide text-emerald-800/70 sm:inline dark:text-emerald-300/80">
+        Current Study
+      </span>
+      <MapPin
+        className="h-3.5 w-3.5 shrink-0 text-emerald-600 group-hover:text-emerald-700 dark:text-emerald-400"
+        aria-hidden
+      />
+      <span className="truncate font-semibold text-slate-800 dark:text-emerald-50">
+        {summary}
+      </span>
+    </button>
   );
 }

@@ -1,13 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import type { PracticeQuestion, YearGroup } from "@/types";
 import type { TopicPracticeScope } from "@/lib/topic/topicPractice";
-import { SUBTOPICS_BY_ID } from "@/data/gcseSyllabus";
+import {
+  getSubtopicById,
+  SUBTOPICS_BY_ID,
+  SYLLABUS_SUBJECTS,
+  type SyllabusSubjectCode,
+} from "@/data/gcseSyllabus";
+import { CurrentlyStudyingBanner } from "@/components/topic/CurrentlyStudyingBanner";
 import {
   QUIZ_SUBJECT_FILTERS,
   subjectFilterLabel,
+  subjectFilterToSyllabusCode,
   type SubjectFilter,
 } from "@/lib/quiz/subjectFilters";
 import {
@@ -22,6 +29,9 @@ type PracticeQuizSectionProps = {
   practiceScope: TopicPracticeScope;
   topicMasteryPercent?: number;
   onQuestionAnswered: (isCorrect: boolean, xp: number) => void;
+  pinnedBySubject?: Record<SyllabusSubjectCode, string>;
+  onPinTopic?: (syllabusSubject: SyllabusSubjectCode) => void;
+  syllabusPanel?: ReactNode;
 };
 
 export function PracticeQuizSection({
@@ -30,6 +40,9 @@ export function PracticeQuizSection({
   practiceScope,
   topicMasteryPercent,
   onQuestionAnswered,
+  pinnedBySubject,
+  onPinTopic,
+  syllabusPanel,
 }: PracticeQuizSectionProps) {
   const [subjectFilter, setSubjectFilter] = useState<SubjectFilter>("ALL");
   const [activeIndex, setActiveIndex] = useState(0);
@@ -168,12 +181,24 @@ export function PracticeQuizSection({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [activeQuestion, handleNextOrSkip, handleSelectOption, showFeedback]);
 
+  const activeSyllabusSubject = subjectFilterToSyllabusCode(subjectFilter);
+  const syllabusMeta = activeSyllabusSubject
+    ? SYLLABUS_SUBJECTS.find((s) => s.code === activeSyllabusSubject)
+    : null;
+  const pinnedSubtopic =
+    activeSyllabusSubject && pinnedBySubject
+      ? getSubtopicById(pinnedBySubject[activeSyllabusSubject])
+      : undefined;
+
+  const showPinnedBar = Boolean(activeSyllabusSubject && onPinTopic);
+
   const scopeHint =
-    practiceScope.mode === "subtopic"
+    !showPinnedBar &&
+    (practiceScope.mode === "subtopic"
       ? `Practising ${practiceScope.subtopic.code} ${practiceScope.subtopic.name}`
       : practiceScope.mode === "mainTopic"
         ? "Practising whole main topic"
-        : null;
+        : null);
 
   return (
     <section
@@ -187,7 +212,8 @@ export function PracticeQuizSection({
         </p>
       )}
 
-      <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+      <div className="flex flex-wrap items-center gap-2 gap-y-2 pb-1">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 overflow-x-auto text-xs">
         {visibleSubjectFilters.map((sub) => {
           const count =
             sub === "ALL"
@@ -223,7 +249,18 @@ export function PracticeQuizSection({
             </button>
           );
         })}
+        </div>
+        {showPinnedBar && activeSyllabusSubject && onPinTopic && (
+          <CurrentlyStudyingBanner
+            subjectLabel={syllabusMeta?.label ?? subjectFilterLabel(subjectFilter)}
+            subtopicCode={pinnedSubtopic?.code}
+            subtopicName={pinnedSubtopic?.name}
+            onPinTopic={() => onPinTopic(activeSyllabusSubject)}
+          />
+        )}
       </div>
+
+      {syllabusPanel}
 
       {activeQuestion && filteredQuestions.length > 0 ? (
         <QuizCard
